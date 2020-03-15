@@ -13,14 +13,15 @@ This project aims to:
 ## TODO
 
 - [ ] Link Shortener
-    - [ ] create postgres
-    - [ ] create pgadmin
-    - [ ] create models
-    - [ ] try gorm migrations
+    - [x] create postgres
+    - [x] create adminer
+    - [x] create models
+    - [x] try gorm migrations
     - [ ] create views
         - [ ] redirecting
         - [ ] listing
         - [ ] creating
+        - [ ] 404 page
 
 - [ ] Predictions
     - [ ] create models

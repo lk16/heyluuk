@@ -9,9 +9,36 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+      - postgres
     ports:
     - "8080:8080"
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
+
+  db:
+    image: postgres
+    restart: always
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
+    networks:
+      - postgres
+
+  adminer:
+    image: adminer
+    restart: always
+    networks:
+      - postgres
+    ports:
+      - 9000:8080
 
 networks:
+  postgres:
+    driver: bridge
   app-network:
     driver: bridge
