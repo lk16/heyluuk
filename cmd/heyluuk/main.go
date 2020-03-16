@@ -30,12 +30,8 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	errs := redirect.Migrate(db)
-	if len(errs) > 0 {
-		for _, err := range errs {
-			log.Println(err.Error())
-		}
-		panic("Redirect DB migration failed")
+	if err := redirect.Migrate(db); err != nil {
+		panic("Redirect DB migration failed: " + err.Error())
 	}
 
 	// Echo instance

@@ -20,12 +20,10 @@ COPY go.mod go.sum ./
 # Download all dependancies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-ADD ./cmd /app/cmd
 ADD ./internal /app/internal
 
 # Build the Go app
 ENV CGO_ENABLED 0
-RUN go install ./cmd/heyluuk
 
 # Run the executable
-CMD ["heyluuk"]
+CMD ["go", "test", "-v", "./internal/..."]

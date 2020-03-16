@@ -12,16 +12,20 @@ import (
 const maxPathDepth = 5
 
 // Migrate does automatic DB model migrations
-func Migrate(db *gorm.DB) []error {
+func Migrate(db *gorm.DB) error {
 
-	if errs := db.AutoMigrate(&Node{}).GetErrors(); len(errs) != 0 {
-		return errs
+	if err := db.AutoMigrate(&Node{}).Error; err != nil {
+		return err
 	}
 
-	db.Model(&Node{}).AddForeignKey("parent_id", Node{}.TableName()+"(id)", "CASCADE", "RESTRICT")
-	db.Model(&Node{}).AddUniqueIndex("parent_id_path_segment_idx", "parent_id", "path_segment")
+	err := db.Model(&Node{}).AddForeignKey(
+		"parent_id",               // field
+		Node{}.TableName()+"(id)", // dest
+		"CASCADE",                 // onDelete
+		"RESTRICT",                // onUpdate
+	).Error
 
-	return nil
+	return err
 }
 
 // Controller supplies some additional context for all request handlers
