@@ -59,7 +59,7 @@ func TestControllerSplitPath(t *testing.T) {
 
 func TestControllerGetLink(t *testing.T) {
 
-	// clean up after this test
+	// clean up after this test finishes
 	defer func() {
 		db.Delete(&Node{})
 	}()
@@ -79,6 +79,7 @@ func TestControllerGetLink(t *testing.T) {
 	}
 
 	testCases := []testCase{
+		testCase{nil, "", errNoPathSegments},
 		testCase{[]string{}, "", errNoPathSegments},
 		testCase{[]string{"a"}, "", errLinkNotFound},
 		testCase{[]string{"foo"}, "", errEmptyRedirectURL},

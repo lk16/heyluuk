@@ -18,7 +18,7 @@ This project aims to:
     - [x] create models
     - [x] try gorm migrations
     - [ ] create views
-        - [ ] redirecting
+        - [x] redirecting
         - [ ] listing
         - [ ] creating
         - [ ] 404 page
@@ -33,3 +33,5 @@ This project aims to:
     - [ ] test coverage
     - [ ] CI
     - [ ] linting
+    - [ ] truncate database after unittests are done
+    - [ ] log more in redirect handler

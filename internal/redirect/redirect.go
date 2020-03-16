@@ -59,18 +59,20 @@ func (cont *Controller) getLink(pathSegments []string) (string, error) {
 	}
 
 	var node Node
-	err := cont.DB.Find(&node, "parent_id IS NULL AND path_segment = ?", pathSegments[0]).Limit(1).Error
+	var err error
 
-	if gorm.IsRecordNotFoundError(err) {
-		return "", errLinkNotFound
-	}
+	for i := 0; i < len(pathSegments); i++ {
 
-	for i := 1; i < len(pathSegments); i++ {
-		parentID := node.ID
-		filter := &Node{PathSegment: pathSegments[i], ParentID: &parentID}
-		node = Node{}
-
-		err = cont.DB.Find(&node, filter).Error
+		if i == 0 {
+			// GORM does not deal with NULL very well, this is a work-around
+			err = cont.DB.Find(&node, "parent_id IS NULL AND path_segment = ?",
+				pathSegments[0]).Limit(1).Error
+		} else {
+			parentID := node.ID
+			node = Node{} // reset node to not confuse GORM
+			filter := &Node{PathSegment: pathSegments[i], ParentID: &parentID}
+			err = cont.DB.Find(&node, filter).Error
+		}
 
 		if gorm.IsRecordNotFoundError(err) {
 			return "", errLinkNotFound
@@ -91,16 +93,22 @@ func (cont *Controller) Redirect(c echo.Context) error {
 	splitPath := cont.splitPath(path)
 
 	if len(splitPath) == 0 {
-		return c.String(http.StatusOK, "Home page")
+		return c.String(http.StatusOK, "Home page\n")
 	}
 
 	if len(splitPath) > maxPathDepth {
-		return c.String(http.StatusBadRequest, "Path has too many segments")
+		return c.String(http.StatusNotFound, "Not Found\n")
 	}
 
 	url, err := cont.getLink(splitPath)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		switch err {
+		case errLinkNotFound:
+		case errEmptyRedirectURL:
+			return c.String(http.StatusNotFound, "Not Found\n")
+		default:
+			return c.String(http.StatusInternalServerError, "Internal Server Error\n")
+		}
 	}
 
 	return c.Redirect(http.StatusFound, url)
