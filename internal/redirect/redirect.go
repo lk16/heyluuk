@@ -9,6 +9,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var (
+	errNoPathSegments   = errors.New("Cannot get link for empty URL")
+	errEmptyRedirectURL = errors.New("No redirect URL found")
+	errLinkNotFound     = errors.New("Link not found")
+)
+
 const maxPathDepth = 5
 
 // Migrate does automatic DB model migrations
@@ -46,25 +52,33 @@ func (cont *Controller) splitPath(path string) []string {
 	return splitPath
 }
 
-func (cont *Controller) getLink(segments []string) (string, error) {
+func (cont *Controller) getLink(pathSegments []string) (string, error) {
 
-	if len(segments) == 0 {
-		return "", errors.New("Cannot get link for empty URL")
+	if len(pathSegments) == 0 {
+		return "", errNoPathSegments
 	}
 
 	var node Node
-	cont.DB.Where(&Node{PathSegment: segments[0]}).First(&node)
+	err := cont.DB.Find(&node, "parent_id IS NULL AND path_segment = ?", pathSegments[0]).Limit(1).Error
 
-	for i := 1; i < len(segments); i++ {
+	if gorm.IsRecordNotFoundError(err) {
+		return "", errLinkNotFound
+	}
+
+	for i := 1; i < len(pathSegments); i++ {
 		parentID := node.ID
-		filter := &Node{PathSegment: segments[i], ParentID: &parentID}
+		filter := &Node{PathSegment: pathSegments[i], ParentID: &parentID}
 		node = Node{}
 
-		cont.DB.Where(filter).First(&node)
+		err = cont.DB.Find(&node, filter).Error
+
+		if gorm.IsRecordNotFoundError(err) {
+			return "", errLinkNotFound
+		}
 	}
 
 	if node.URL == "" {
-		return "", errors.New("No URL found")
+		return "", errEmptyRedirectURL
 	}
 
 	return node.URL, nil

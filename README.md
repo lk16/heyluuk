@@ -28,3 +28,8 @@ This project aims to:
     - [ ] create views
         - [ ] listing
         - [ ] creating
+
+- [ ] Good style
+    - [ ] test coverage
+    - [ ] CI
+    - [ ] linting
