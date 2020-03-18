@@ -36,7 +36,7 @@ services:
       - postgres
     ports:
       - 9000:8080
-      
+
 networks:
   postgres:
     driver: bridge
