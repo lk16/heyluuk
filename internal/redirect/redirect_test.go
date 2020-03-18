@@ -3,11 +3,14 @@ package redirect
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,7 +88,8 @@ func TestControllerGetLink(t *testing.T) {
 		testCase{[]string{"foo"}, "", errEmptyRedirectURL},
 		testCase{[]string{"foo", "a"}, "", errLinkNotFound},
 		testCase{[]string{"foo", "bar"}, "https://example.com/", nil},
-		testCase{[]string{"foo", "bar", "a'"}, "", errLinkNotFound},
+		testCase{[]string{"foo", "bar", "a"}, "", errLinkNotFound},
+		testCase{[]string{"a", "a", "a", "a", "a", "a"}, "", errTooManyPathSegments},
 	}
 
 	cont := &Controller{DB: db}
@@ -98,5 +102,52 @@ func TestControllerGetLink(t *testing.T) {
 }
 
 func TestControllerRedirect(t *testing.T) {
-	// TODO
+
+	// clean up after this test finishes
+	defer func() {
+		db.Delete(&Node{})
+	}()
+
+	fooNode := Node{PathSegment: "foo"}
+	err := db.Create(&fooNode).Error
+	assert.Nil(t, err)
+
+	barNode := Node{PathSegment: "bar", ParentID: &fooNode.ID, URL: "https://example.com/"}
+	err = db.Create(&barNode).Error
+	assert.Nil(t, err)
+
+	e := echo.New()
+	cont := &Controller{DB: db}
+
+	t.Run("postRoot", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		assert.Nil(t, cont.Redirect(c))
+		assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
+	})
+
+	t.Run("getRoot", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		assert.Nil(t, cont.Redirect(c))
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("getFooBar", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/foo/bar", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		assert.Nil(t, cont.Redirect(c))
+		assert.Equal(t, http.StatusFound, rec.Code)
+
+		location, err := rec.Result().Location()
+		assert.Nil(t, err)
+
+		assert.Equal(t, "https://example.com/", location.String())
+	})
 }

@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	errNoPathSegments   = errors.New("Cannot get link for empty URL")
-	errEmptyRedirectURL = errors.New("No redirect URL found")
-	errLinkNotFound     = errors.New("Link not found")
+	errNoPathSegments      = errors.New("Cannot get link for empty URL")
+	errEmptyRedirectURL    = errors.New("No redirect URL found")
+	errLinkNotFound        = errors.New("Link not found")
+	errTooManyPathSegments = errors.New("Too many path segments")
 )
 
 const maxPathDepth = 5
@@ -58,6 +59,10 @@ func (cont *Controller) getLink(pathSegments []string) (string, error) {
 		return "", errNoPathSegments
 	}
 
+	if len(pathSegments) > maxPathDepth {
+		return "", errTooManyPathSegments
+	}
+
 	var node Node
 	var err error
 
@@ -89,26 +94,17 @@ func (cont *Controller) getLink(pathSegments []string) (string, error) {
 // Redirect redirects any url in the db
 func (cont *Controller) Redirect(c echo.Context) error {
 
+	if c.Request().Method != "GET" {
+		return c.String(http.StatusMethodNotAllowed, "Method not allowed\n")
+	}
+
 	path := c.Request().URL.Path
 	splitPath := cont.splitPath(path)
 
-	if len(splitPath) == 0 {
-		return c.String(http.StatusOK, "Home page\n")
-	}
-
-	if len(splitPath) > maxPathDepth {
-		return c.String(http.StatusNotFound, "Not Found\n")
-	}
-
 	url, err := cont.getLink(splitPath)
+
 	if err != nil {
-		switch err {
-		case errLinkNotFound:
-		case errEmptyRedirectURL:
-			return c.String(http.StatusNotFound, "Not Found\n")
-		default:
-			return c.String(http.StatusInternalServerError, "Internal Server Error\n")
-		}
+		return c.String(http.StatusNotFound, "Not Found\n")
 	}
 
 	return c.Redirect(http.StatusFound, url)

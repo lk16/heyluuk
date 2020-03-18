@@ -26,4 +26,4 @@ ADD ./internal /app/internal
 ENV CGO_ENABLED 0
 
 # Run the executable
-CMD ["go", "test", "-v", "./internal/..."]
+CMD go test -v ./internal/...
