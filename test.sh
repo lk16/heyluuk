@@ -4,4 +4,3 @@
 export COMPOSE_IGNORE_ORPHANS=True
 
 docker-compose -f docker-compose-test.yml up --build --abort-on-container-exit
-    

@@ -33,5 +33,4 @@ This project aims to:
     - [ ] test coverage
     - [ ] CI
     - [ ] linting
-    - [ ] truncate database after unittests are done
     - [ ] log more in redirect handler
