@@ -19,8 +19,14 @@ This project aims to:
     - [x] try gorm migrations
     - [ ] create views
         - [x] redirecting
-        - [ ] listing
-        - [ ] creating
+        - [ ] JSON API
+            - [ ] creating links
+            - [ ] listing tree structure
+            - [ ] searching
+        - [ ] nice web UI
+            - [ ] creating links
+            - [ ] listing tree structure
+            - [ ] searching
         - [ ] 404 page
 
 - [ ] Predictions
