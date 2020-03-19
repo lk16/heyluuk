@@ -42,7 +42,13 @@ func main() {
 	e.Use(middleware.Recover())
 
 	controller := &redirect.Controller{DB: db}
-	e.GET("/*", controller.Redirect)
+
+	// TODO uncomment
+	//e.GET("/*", controller.Redirect)
+
+	// TODO merge
+	e.GET("/at/this", controller.NewLinkGet)
+	e.POST("/at/this", controller.NewLinkPost)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))

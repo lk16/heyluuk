@@ -16,6 +16,8 @@ services:
       - POSTGRES_USER
       - POSTGRES_DB
       - POSTGRES_PASSWORD
+      - CAPTCHA_SITE_KEY
+      - CAPTCHA_SECRET_KEY
 
   db:
     image: postgres

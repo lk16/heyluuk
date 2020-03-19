@@ -2,14 +2,20 @@ package redirect
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
+	"gopkg.in/romanyx/recaptcha.v1"
 )
 
 var (
+	captchaSecretKey = os.Getenv("CAPTCHA_SECRET_KEY")
+	captchaSiteKey   = os.Getenv("CAPTCHA_SITE_KEY")
+
 	errNoPathSegments      = errors.New("Cannot get link for empty URL")
 	errEmptyRedirectURL    = errors.New("No redirect URL found")
 	errLinkNotFound        = errors.New("Link not found")
@@ -108,4 +114,52 @@ func (cont *Controller) Redirect(c echo.Context) error {
 	}
 
 	return c.Redirect(http.StatusFound, url)
+}
+
+// NewLinkGet is a page that handles GET requests to create a new link
+func (cont *Controller) NewLinkGet(c echo.Context) error {
+	html := fmt.Sprintf(`<!DOCTYPE html>
+		<html lang="en">
+		<head>
+		<meta charset="UTF-8">
+		<title>Golang reCAPTCHA Signup Form</title>
+		<script src="https://www.google.com/recaptcha/api.js?render=%s"></script>
+		<script>
+		grecaptcha.ready(function() {
+			grecaptcha.execute('%s', {action: 'homepage'}).then(function(token) {
+				document.getElementById('g-recaptcha-response').value = token;
+			});
+		});
+		</script>
+		</head>
+		<body>
+		<h1>Luuk at this new link!</h1>
+		<form method="POST" action="/at/this">
+		<input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" />
+		https://heylu.uk/<input type="text" name="shortcut">
+		<br>
+		URL: <input type="text" name="url">
+		<br>
+		<br>
+		<input type="submit" value="Submit">
+		</form>
+		</body>
+		</html>`, captchaSiteKey, captchaSiteKey)
+
+	return c.HTML(http.StatusOK, html)
+}
+
+// NewLinkPost is a page that handles POST request to create a new link
+func (cont *Controller) NewLinkPost(c echo.Context) error {
+
+	r := recaptcha.New(captchaSecretKey)
+	_, err := r.Verify(c.FormValue("g-recaptcha-response"))
+
+	if err != nil {
+		return c.String(http.StatusOK, "AWW")
+	}
+
+	// TODO actually handle POST data
+
+	return c.String(http.StatusOK, "YAY")
 }
