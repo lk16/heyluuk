@@ -22,6 +22,7 @@ RUN go mod download
 
 ADD ./cmd /app/cmd
 ADD ./internal /app/internal
+ADD ./web /app/web
 
 # Build the Go app
 ENV CGO_ENABLED 0

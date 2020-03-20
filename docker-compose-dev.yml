@@ -28,6 +28,8 @@ services:
       - POSTGRES_USER
       - POSTGRES_DB
       - POSTGRES_PASSWORD
+    ports:
+    - 5432:5432
     networks:
       - postgres
 
