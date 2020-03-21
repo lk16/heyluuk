@@ -2,6 +2,7 @@ package redirect
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -24,6 +25,7 @@ var (
 	errTooLongSegment      = errors.New("Path has a segment that is too long")
 	errLinkPointsElsewhere = errors.New("Link exists already and redirects elsewhere")
 	errLinkExists          = errors.New("Link exists already")
+	errPathTooLong         = errors.New("Path is too long")
 
 	pathRegex = regexp.MustCompile("[a-z0-9/-]*")
 )
@@ -31,6 +33,7 @@ var (
 const (
 	maxPathDepth     = 5
 	maxSegmentLength = 20
+	maxPathLength    = (maxPathDepth * maxSegmentLength) + maxPathDepth
 )
 
 // Migrate does automatic DB model migrations
@@ -55,28 +58,7 @@ type Controller struct {
 	DB *gorm.DB
 }
 
-func splitPath(path string) []string {
-	segments := strings.Split(path, "/")
-
-	var splitPath []string
-	for _, segment := range segments {
-		if segment != "" {
-			splitPath = append(splitPath, segment)
-		}
-	}
-
-	return splitPath
-}
-
 func (cont *Controller) getLink(pathSegments []string) (string, error) {
-
-	if len(pathSegments) == 0 {
-		return "", errEmptyPath
-	}
-
-	if len(pathSegments) > maxPathDepth {
-		return "", errTooManyPathSegments
-	}
 
 	var node Node
 	var err error
@@ -118,11 +100,17 @@ func (cont *Controller) Redirect(c echo.Context) error {
 	}
 
 	path := c.Request().URL.Path
-	splitPath := splitPath(path)
+	splitPath, err := verifyAndSplitPath(path)
+
+	if err != nil {
+		log.Printf("Error for path %s: %s", path, err.Error())
+		return c.String(http.StatusNotFound, "Not Found\n")
+	}
 
 	url, err := cont.getLink(splitPath)
 
 	if err != nil {
+		log.Printf("Error for path %s: %s", path, err.Error())
 		return c.String(http.StatusNotFound, "Not Found\n")
 	}
 
@@ -140,17 +128,31 @@ func (cont *Controller) NewLinkGet(c echo.Context) error {
 	return c.Render(http.StatusOK, "new_link.html", data)
 }
 
-func verifyPath(path string) (segments []string, err error) {
+func verifyAndSplitPath(path string) (segments []string, err error) {
 
 	if len(path) == 0 {
 		return nil, errEmptyPath
+	}
+
+	if len(path) > maxPathLength {
+		return nil, errPathTooLong
 	}
 
 	if !pathRegex.MatchString(path) {
 		return nil, errInvalidPath
 	}
 
-	segments = splitPath(path)
+	splitPath := strings.Split(path, "/")
+
+	for _, segment := range splitPath {
+		if segment != "" {
+			segments = append(segments, segment)
+		}
+	}
+
+	if len(segments) == 0 {
+		return nil, errEmptyPath
+	}
 
 	if len(segments) > maxPathDepth {
 		return nil, errTooManyPathSegments
@@ -166,7 +168,7 @@ func verifyPath(path string) (segments []string, err error) {
 }
 
 func verifyURL(URL string) (string, error) {
-	// TODO test we get http 200 and test for timeout
+	// TODO test we get HTTP 2xx and test for timeout
 
 	if !strings.HasPrefix(URL, "http://") && !strings.HasPrefix(URL, "https://") {
 		URL = "http://" + URL
@@ -184,25 +186,29 @@ func (cont *Controller) insertNewLink(URL string, segments []string) error {
 	var node Node
 	var err error
 
-	for i := 0; i < len(segments); i++ {
+	for i, segment := range segments {
 
 		parentID := node.ID
+		var where []interface{}
 
+		// GORM ignores NULL values in Find(...) and similar, so we work-around it
 		if i == 0 {
-			err = cont.DB.Find(&node, "parent_id IS NULL AND path_segment = ?",
-				segments[0]).Limit(1).Error
+			where = []interface{}{
+				"path_segment = ? AND parent_id IS NULL", segment}
 		} else {
-			node = Node{} // reset node to not confuse GORM
-			filter := &Node{PathSegment: segments[i], ParentID: &parentID}
-			err = cont.DB.Find(&node, filter).Error
+			where = []interface{}{
+				&Node{PathSegment: segment, ParentID: &parentID}}
 		}
+
+		node = Node{} // reset node to not confuse GORM
+		err = cont.DB.Find(&node, where...).Error
 
 		if gorm.IsRecordNotFoundError(err) {
 			// Link not found, create it
 
-			node = Node{PathSegment: segments[i]}
+			node = Node{PathSegment: segment}
 
-			if parentID != 0 {
+			if i != 0 {
 				node.ParentID = &parentID
 			}
 
@@ -214,26 +220,21 @@ func (cont *Controller) insertNewLink(URL string, segments []string) error {
 			// DB error
 			return err
 		}
-
-		if i == len(segments)-1 {
-
-			// Node has no link
-			if node.URL == "" {
-				node.URL = URL
-				return cont.DB.Save(&node).Error
-			}
-
-			// Node has different link
-			if node.URL != URL {
-				return errLinkPointsElsewhere
-			}
-
-			// Node has same link
-			return errLinkExists
-		}
 	}
 
-	return nil
+	// Node has no link
+	if node.URL == "" {
+		node.URL = URL
+		return cont.DB.Save(&node).Error
+	}
+
+	// Node has different link
+	if node.URL != URL {
+		return errLinkPointsElsewhere
+	}
+
+	// Node has same link
+	return errLinkExists
 }
 
 // NewLinkPost is a page that handles POST request to create a new link
@@ -254,7 +255,7 @@ func (cont *Controller) NewLinkPost(c echo.Context) error {
 	path := c.FormValue("path")
 
 	var segments []string
-	if segments, err = verifyPath(path); err != nil {
+	if segments, err = verifyAndSplitPath(path); err != nil {
 		return err
 	}
 

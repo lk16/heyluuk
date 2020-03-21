@@ -20,7 +20,7 @@ This project aims to:
     - [ ] create views
         - [x] redirecting
         - [ ] JSON API
-            - [ ] creating links
+            - [x] creating links
             - [ ] listing tree structure
             - [ ] searching
         - [ ] nice web UI

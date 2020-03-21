@@ -9,7 +9,7 @@ services:
     depends_on:
       - test_db
     networks:
-      - postgres
+      - postgres_test
     environment:
       - POSTGRES_TEST_USER
       - POSTGRES_TEST_DB
@@ -23,9 +23,9 @@ services:
       - POSTGRES_DB=${POSTGRES_TEST_DB:?}
       - POSTGRES_PASSWORD=${POSTGRES_TEST_PASSWORD:?}
     networks:
-      - postgres
+      - postgres_test
 
 
 networks:
-  postgres:
+  postgres_test:
     driver: bridge

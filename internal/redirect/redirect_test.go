@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/jinzhu/gorm"
@@ -45,18 +46,47 @@ func init() {
 
 }
 
-func TestControllerSplitPath(t *testing.T) {
-	assert.Equal(t, ([]string)(nil), splitPath(""))
-	assert.Equal(t, ([]string)(nil), splitPath("/"))
-	assert.Equal(t, ([]string)(nil), splitPath("//"))
-	assert.Equal(t, ([]string)(nil), splitPath("///"))
-	assert.Equal(t, []string{"1"}, splitPath("/1"))
-	assert.Equal(t, []string{"1"}, splitPath("/1/"))
-	assert.Equal(t, []string{"1", "2"}, splitPath("1/2"))
-	assert.Equal(t, []string{"1", "2"}, splitPath("/1/2"))
-	assert.Equal(t, []string{"1", "2"}, splitPath("1/2/"))
-	assert.Equal(t, []string{"1", "2"}, splitPath("/1/2/"))
-	assert.Equal(t, []string{"1", "2"}, splitPath("/1/////2/"))
+func TestControllerVerifyAndSplitPath(t *testing.T) {
+
+	type testCase struct {
+		path             string
+		expectedSegments []string
+		expectedError    error
+	}
+
+	longPathSegment := strings.Repeat("a", maxSegmentLength)
+	longPath := strings.Repeat(longPathSegment+"/", maxPathDepth-1) + longPathSegment
+	splitLongPath := strings.Split(longPath, "/")
+
+	tooLongPath := strings.Repeat("a", maxPathLength+1)
+
+	longSegment := strings.Repeat("a", maxSegmentLength)
+	tooLongSegment := strings.Repeat("a", maxSegmentLength+1)
+
+	testCases := []testCase{
+		testCase{"", ([]string)(nil), errEmptyPath},
+		testCase{"/", ([]string)(nil), errEmptyPath},
+		testCase{"//", ([]string)(nil), errEmptyPath},
+		testCase{"///", ([]string)(nil), errEmptyPath},
+		testCase{"/1", []string{"1"}, nil},
+		testCase{"/1/", []string{"1"}, nil},
+		testCase{"1/2", []string{"1", "2"}, nil},
+		testCase{"/1/2", []string{"1", "2"}, nil},
+		testCase{"1/2/", []string{"1", "2"}, nil},
+		testCase{"/1/2/", []string{"1", "2"}, nil},
+		testCase{"/1/////2/", []string{"1", "2"}, nil},
+		testCase{longPath, splitLongPath, nil},
+		testCase{tooLongPath, ([]string)(nil), errPathTooLong},
+		testCase{longSegment, []string{longSegment}, nil},
+		testCase{tooLongSegment, ([]string)(nil), errTooLongSegment},
+		testCase{"a/" + tooLongSegment, ([]string)(nil), errTooLongSegment},
+	}
+
+	for _, testCase := range testCases {
+		segments, err := verifyAndSplitPath(testCase.path)
+		assert.Equalf(t, segments, testCase.expectedSegments, "path=%s", testCase.path)
+		assert.Equalf(t, err, testCase.expectedError, "path=%s", testCase.path)
+	}
 }
 
 func TestControllerGetLink(t *testing.T) {
@@ -81,14 +111,11 @@ func TestControllerGetLink(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		testCase{nil, "", errEmptyPath},
-		testCase{[]string{}, "", errEmptyPath},
 		testCase{[]string{"a"}, "", errLinkNotFound},
 		testCase{[]string{"foo"}, "", errEmptyRedirectURL},
 		testCase{[]string{"foo", "a"}, "", errLinkNotFound},
 		testCase{[]string{"foo", "bar"}, "https://example.com/", nil},
 		testCase{[]string{"foo", "bar", "a"}, "", errLinkNotFound},
-		testCase{[]string{"a", "a", "a", "a", "a", "a"}, "", errTooManyPathSegments},
 	}
 
 	cont := &Controller{DB: db}
@@ -390,7 +417,7 @@ func TestControllerInsertNewLink(t *testing.T) {
 		})
 	})
 
-	t.Run("NewLinkTwoDeep", func(t *testing.T) {
+	t.Run("NewLinkOneDeepWithNewParent", func(t *testing.T) {
 
 		segments := []string{"new", "new"}
 
@@ -422,7 +449,6 @@ func TestControllerInsertNewLink(t *testing.T) {
 			assert.Equal(t, expectedNode, node)
 
 			parentID := node.ID
-			log.Printf("parentID = %d", parentID)
 			node = Node{}
 			err = cont.DB.Find(&node, &Node{PathSegment: "new", ParentID: &parentID}).Error
 			assert.Nil(t, err)
@@ -431,4 +457,8 @@ func TestControllerInsertNewLink(t *testing.T) {
 			assert.Equal(t, expectedNode, node)
 		})
 	})
+}
+
+func TestControllerNewLinkPost(t *testing.T) {
+	// TODO
 }
