@@ -58,10 +58,7 @@ func main() {
 
 	controller := &redirect.Controller{DB: db}
 
-	// TODO uncomment
-	//e.GET("/*", controller.Redirect)
-
-	// TODO merge
+	e.GET("/*", controller.Redirect)
 	e.GET("/at/this", controller.NewLinkGet)
 	e.POST("/at/this", controller.NewLinkPost)
 
