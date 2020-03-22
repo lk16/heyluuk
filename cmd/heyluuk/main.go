@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/jinzhu/gorm"
@@ -23,10 +22,6 @@ var (
 )
 
 const postgresHost = "db"
-
-func Index(c echo.Context) error {
-	return c.Render(http.StatusOK, "index.html", nil)
-}
 
 func main() {
 
@@ -59,7 +54,9 @@ func main() {
 	e.GET("/*", controller.Redirect)
 
 	e.Static("/static", "./web/static")
-	e.GET("/index", Index)
+	e.GET("/", controller.Index)
+	e.GET("/at/my/faq", controller.Faq)
+	e.GET("/at/my/predictions", controller.Predictions)
 
 	e.GET("/at/this", controller.NewLinkGet)
 

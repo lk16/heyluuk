@@ -1,56 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Golang reCAPTCHA Signup Form</title>
-        <script src="https://www.google.com/recaptcha/api.js?render={{ .CaptchaSiteKey }}"></script>
-        <script>
-        grecaptcha.ready(function() {
-            grecaptcha.execute('{{ .CaptchaSiteKey }}', {action: 'homepage'}).then(function(token) {
-                document.getElementById('g-recaptcha-response').value = token;
+{{ define "content" }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        $("#form").submit(function (e) {
+            e.preventDefault();
+
+            var array = $("#form").serializeArray();
+            var body = {};
+            $(array).each(function (index, obj) {
+                body[obj.name] = obj.value;
+            });
+
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/api/link',
+                data: JSON.stringify(body),
+                success: function (result) {
+                    console.log(result);
+                },
+                error: function (xhr, resp, text) {
+                    console.log(xhr, resp, text);
+                }
             });
         });
-        </script>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-        <script>
-            $(document).ready(function(){
+    });
+</script>
 
-                $("#form").submit(function(e) {
-                    e.preventDefault();
-
-                    var array = $("#form").serializeArray();
-                    var body = {};
-                    $(array).each(function(index, obj){
-                        body[obj.name] = obj.value;
-                    });
-
-                    $.ajax({
-                        type: "POST",
-                        contentType: "application/json; charset=utf-8",
-                        url: '/api/link',
-                        data: JSON.stringify(body),
-                        success : function(result) {
-                            console.log(result);
-                        },
-                        error: function(xhr, resp, text) {
-                            console.log(xhr, resp, text);
-                        }
-                    });
-                });
-            });
-        </script>
-    </head>
-    <body>
-        <h1>Luuk at this new link!</h1>
-        <form action="" id="form">
-            <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" />
-            https://heylu.uk/
-            <input type="text" name="path" />
-            <br />
-            URL: <input type="text" name="url" />
-            <br />
-            <br />
-            <input type="submit" id="sumbit" value="Submit" />
-        </form>
-    </body>
-</html>
+<div class="m-3">
+    <form class="form-inline" action="" id="form">
+        <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" />
+        <div class="input-group form-group mx-sm-2 mb-2">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="inputGroupPrepend">https://heylu.uk/</span>
+            </div>
+            <input type="text" name="path" class="form-control" placeholder="at/my/amazing/thing" aria-describedby="inputGroupPrepend" required>
+        </div>
+        <div class="input-group form-group mx-sm-2 mb-2">
+            <input type="text" name="url" class="form-control" placeholder="example.org/something">
+        </div>
+        <button type="submit" id="submit" class="btn btn-primary mx-sm-2 mb-2">Create link</button>
+    </form>
+</div>
+{{ end }}

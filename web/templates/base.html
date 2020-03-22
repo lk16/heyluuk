@@ -14,7 +14,7 @@
         <!-- Page Content -->
         <div id="page-content-wrapper">
 
-            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
                 {{ template "navbar" . }}
             </nav>
 
@@ -43,23 +43,32 @@
 <title>Simple Sidebar - Start Bootstrap Template</title>
 
 <!-- Bootstrap core CSS -->
-<link href="static/bootstrap.min.css" rel="stylesheet">
+<link href="/static/bootstrap.min.css" rel="stylesheet">
 
 <!-- Custom styles for this template -->
-<link href="static/simple-sidebar.css" rel="stylesheet">
+<link href="/static/simple-sidebar.css" rel="stylesheet">
+
+<script src="https://www.google.com/recaptcha/api.js?render={{ .CaptchaSiteKey }}"></script>
+<script>
+grecaptcha.ready(function() {
+    grecaptcha.execute('{{ .CaptchaSiteKey }}', {action: 'homepage'}).then(function(token) {
+        document.getElementById('g-recaptcha-response').value = token;
+    });
+});
+</script>
 {{ end }}
 
 {{ define "sidebar" }}
 <!-- Sidebar -->
 <div class="bg-light border-right" id="sidebar-wrapper">
-    <div class="sidebar-heading">Start Bootstrap </div>
+    <div class="sidebar-heading">Hey Luuk</div>
     <div class="list-group list-group-flush">
-        <a href="#" class="list-group-item list-group-item-action bg-light">Dashboard</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Shortcuts</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Overview</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Events</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Profile</a>
-        <a href="#" class="list-group-item list-group-item-action bg-light">Status</a>
+        <a href="/" class="list-group-item list-group-item-action bg-light">This site</a>
+        <a href="/at/this" class="list-group-item list-group-item-action bg-light">Links</a>
+        <a href="/at/my/predictions" class="list-group-item list-group-item-action bg-light">Predictions</a>
+        <a href="/at/dots" class="list-group-item list-group-item-action bg-light">Dots</a>
+        <a href="https://github.com/lk16/heyluuk" class="list-group-item list-group-item-action bg-light">Github</a>
+        <a href="/at/my/faq" class="list-group-item list-group-item-action bg-light">F.A.Q.</a>
     </div>
 </div>
 <!-- /#sidebar-wrapper -->
@@ -99,8 +108,8 @@
 
 {{ define "footer" }}
 <!-- Bootstrap core JavaScript -->
-<script src="static/jquery.min.js"></script>
-<script src="static/bootstrap.bundle.min.js"></script>
+<script src="/static/jquery.min.js"></script>
+<script src="/static/bootstrap.bundle.min.js"></script>
 
 <!-- Menu Toggle Script -->
 <script>

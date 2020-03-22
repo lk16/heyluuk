@@ -22,9 +22,13 @@ This project aims to:
         - [ ] JSON API
             - [x] get: GET `/api/node/<id>`
             - [x] create: POST `/api/link` with JSON body
+            - [ ] check: GET `/api/link/check
             - [ ] search: GET `/api/link/?q=query`
         - [ ] nice web UI
             - [ ] creating links
+                - [x] basic form
+                - [ ] check if link is available with ajax
+                - [ ] feedback on submission
             - [ ] listing tree structure
             - [ ] searching
         - [ ] 404 page
@@ -40,4 +44,5 @@ This project aims to:
     - [ ] CI
     - [ ] linting
     - [ ] log more in redirect handler
-    - [ ] use static jquery
+    - [x] use static jquery
+    - [ ] human readable logs
