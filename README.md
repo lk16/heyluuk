@@ -20,9 +20,9 @@ This project aims to:
     - [ ] create views
         - [x] redirecting
         - [ ] JSON API
-            - [x] creating links
-            - [ ] listing tree structure
-            - [ ] searching
+            - [x] get: GET `/api/node/<id>`
+            - [x] create: POST `/api/link` with JSON body
+            - [ ] search: GET `/api/link/?q=query`
         - [ ] nice web UI
             - [ ] creating links
             - [ ] listing tree structure
@@ -40,3 +40,4 @@ This project aims to:
     - [ ] CI
     - [ ] linting
     - [ ] log more in redirect handler
+    - [ ] use static jquery

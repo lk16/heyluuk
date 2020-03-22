@@ -1,8 +1,11 @@
 package redirect
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +16,10 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo/v4"
+	"github.com/lk16/heyluuk/internal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"gopkg.in/romanyx/recaptcha.v1"
 )
 
 var (
@@ -460,5 +466,268 @@ func TestControllerInsertNewLink(t *testing.T) {
 }
 
 func TestControllerNewLinkPost(t *testing.T) {
-	// TODO
+
+	e := echo.New()
+
+	mockCaptchaApprover := &internal.MockCaptchaVerifier{}
+	mockCaptchaApprover.On("Verify", mock.Anything).Times(99).
+		Return(&recaptcha.Response{Success: true}, nil)
+
+	cont := &Controller{DB: db, Captcha: mockCaptchaApprover}
+
+	// clean up after this test finishes
+	defer func() {
+		cont.DB.Delete(&Node{})
+	}()
+
+	tester := func(t *testing.T, body io.Reader,
+		expectedStatusCode int, expectedJSONResponse interface{}, expectedDBNodeCount int) {
+
+		req := httptest.NewRequest(http.MethodPost, "/api/link", body)
+		req.Header.Add("Content-Type", "application/json; charset=utf-8")
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		err := cont.PostLink(c)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedStatusCode, rec.Code)
+
+		expectedJSONResponseBytes, err := json.Marshal(expectedJSONResponse)
+		assert.JSONEq(t, string(expectedJSONResponseBytes), rec.Body.String())
+
+		// we can reset the error here, since the request has been done already
+		cont.DB.Error = nil
+
+		var count int
+		err = cont.DB.Model(&Node{}).Count(&count).Error
+		assert.Nil(t, err)
+		assert.Equal(t, count, expectedDBNodeCount)
+	}
+
+	t.Run("CaptchaFail", func(t *testing.T) {
+
+		body := PostLinkBody{Path: "", URL: ""}
+		bodyBytes, err := json.Marshal(body)
+		assert.Nil(t, err)
+
+		mockCaptchaFailer := &internal.MockCaptchaVerifier{}
+		mockCaptchaFailer.On("Verify", mock.Anything).Once().
+			Return(&recaptcha.Response{Success: false}, nil)
+
+		cont.Captcha = mockCaptchaFailer
+		defer func() {
+			cont.Captcha = mockCaptchaApprover
+		}()
+
+		expectedStatusCode := http.StatusBadRequest
+		expectedJSON := ErrorResponse{"Recaptcha verification failed"}
+		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
+	})
+
+	t.Run("CaptchaErrorFailer", func(t *testing.T) {
+
+		body := PostLinkBody{Path: "", URL: ""}
+		bodyBytes, err := json.Marshal(body)
+		assert.Nil(t, err)
+
+		mockCaptchaFailer := &internal.MockCaptchaVerifier{}
+		mockCaptchaFailer.On("Verify", mock.Anything).Once().
+			Return((*recaptcha.Response)(nil), errors.New(""))
+
+		cont.Captcha = mockCaptchaFailer
+		defer func() {
+			cont.Captcha = mockCaptchaApprover
+		}()
+
+		expectedStatusCode := http.StatusBadRequest
+		expectedJSON := ErrorResponse{"Recaptcha verification failed"}
+		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
+	})
+
+	t.Run("InvalidShortCut", func(t *testing.T) {
+		body := PostLinkBody{Path: "", URL: ""}
+		bodyBytes, err := json.Marshal(body)
+		assert.Nil(t, err)
+
+		expectedStatusCode := http.StatusBadRequest
+		expectedJSON := ErrorResponse{"Invalid shortcut"}
+		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
+	})
+
+	t.Run("InvalidShortcut", func(t *testing.T) {
+		body := PostLinkBody{Path: "", URL: "a"}
+		bodyBytes, err := json.Marshal(body)
+		assert.Nil(t, err)
+
+		expectedStatusCode := http.StatusBadRequest
+		expectedJSON := ErrorResponse{"Invalid shortcut"}
+		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
+	})
+
+	t.Run("InvalidRedirectLink", func(t *testing.T) {
+		body := PostLinkBody{Path: "a", URL: "heylu.uk"}
+		bodyBytes, err := json.Marshal(body)
+		assert.Nil(t, err)
+
+		expectedStatusCode := http.StatusBadRequest
+		expectedJSON := ErrorResponse{"Invalid redirect link"}
+		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
+	})
+
+	t.Run("DBError", func(t *testing.T) {
+		body := PostLinkBody{Path: "a", URL: "a"}
+		bodyBytes, err := json.Marshal(body)
+		assert.Nil(t, err)
+
+		errDummy := errors.New("dummy error")
+		cont.DB.AddError(errDummy)
+		defer func() {
+			cont.DB.Error = nil
+		}()
+
+		expectedStatusCode := http.StatusInternalServerError
+		expectedJSON := ErrorResponse{"Saving new link failed: " + errDummy.Error()}
+		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
+	})
+
+	t.Run("OK", func(t *testing.T) {
+		body := PostLinkBody{Path: "a", URL: "b"}
+		bodyBytes, err := json.Marshal(body)
+		assert.Nil(t, err)
+
+		expectedStatusCode := http.StatusCreated
+		expectedJSON := CreateLinkResponse{Shortcut: "/" + body.Path, Redirect: "http://" + body.URL}
+		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 1)
+	})
+}
+
+func TestControllerGetNode(t *testing.T) {
+
+	cont := &Controller{DB: db}
+	e := echo.New()
+
+	// clean up after this test finishes
+	defer func() {
+		cont.DB.Delete(&Node{})
+	}()
+
+	fooNode := Node{PathSegment: "foo", URL: "http://foo/"}
+	err := cont.DB.Create(&fooNode).Error
+	assert.Nil(t, err)
+
+	barNode := Node{PathSegment: "bar", URL: "http://bar/", ParentID: &fooNode.ID}
+	err = cont.DB.Create(&barNode).Error
+	assert.Nil(t, err)
+
+	expectedDBNodeCount := 2
+
+	tester := func(t *testing.T, ID string, expectedStatusCode int, expectedJSONResponse interface{}) {
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/api/node/:id")
+		c.SetParamNames("id")
+		c.SetParamValues(ID)
+
+		err := cont.GetNode(c)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedStatusCode, rec.Code)
+
+		expectedJSONResponseBytes, err := json.Marshal(expectedJSONResponse)
+		assert.JSONEq(t, string(expectedJSONResponseBytes), rec.Body.String())
+
+		// we can reset the error here, since the request has been done already
+		cont.DB.Error = nil
+
+		var count int
+		err = cont.DB.Model(&Node{}).Count(&count).Error
+		assert.Nil(t, err)
+		assert.Equal(t, count, expectedDBNodeCount)
+	}
+
+	t.Run("InvalidParameter", func(t *testing.T) {
+		expectedJSONResponse := ErrorResponse{"Invalid id parameter"}
+		tester(t, "broken", http.StatusBadRequest, expectedJSONResponse)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		nonExistentID := fmt.Sprintf("%d", fooNode.ID+barNode.ID)
+		tester(t, nonExistentID, http.StatusNotFound, nil)
+	})
+
+	t.Run("DBError", func(t *testing.T) {
+
+		cont.DB.Error = errors.New("")
+		defer func() {
+			cont.DB.Error = nil
+		}()
+
+		ID := fmt.Sprintf("%d", fooNode.ID)
+		tester(t, ID, http.StatusInternalServerError, nil)
+	})
+
+	t.Run("Found", func(t *testing.T) {
+		ID := fmt.Sprintf("%d", barNode.ID)
+		tester(t, ID, http.StatusOK, barNode)
+	})
+
+	t.Run("FoundWithParent", func(t *testing.T) {
+		ID := fmt.Sprintf("%d", fooNode.ID)
+		tester(t, ID, http.StatusOK, fooNode)
+	})
+}
+
+func TestControllerNodeRoot(t *testing.T) {
+	cont := &Controller{DB: db}
+	e := echo.New()
+
+	// clean up after this test finishes
+	defer func() {
+		cont.DB.Delete(&Node{})
+	}()
+
+	tester := func(t *testing.T, expectedStatusCode int, expectedJSONResponse interface{}) {
+
+		req := httptest.NewRequest(http.MethodGet, "/api/node/root", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		err := cont.GetNodeRoot(c)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedStatusCode, rec.Code)
+
+		expectedJSONResponseBytes, err := json.Marshal(expectedJSONResponse)
+		assert.JSONEq(t, string(expectedJSONResponseBytes), rec.Body.String())
+	}
+
+	t.Run("NoItems", func(t *testing.T) {
+		tester(t, http.StatusOK, []Node{})
+	})
+
+	t.Run("DBError", func(t *testing.T) {
+		cont.DB.AddError(errors.New(""))
+		defer func() {
+			cont.DB.Error = nil
+		}()
+
+		tester(t, http.StatusInternalServerError, nil)
+	})
+
+	fooNode := Node{PathSegment: "foo"}
+	err := cont.DB.Create(&fooNode).Error
+	assert.Nil(t, err)
+
+	barNode := Node{PathSegment: "bar", URL: "http://bar/", ParentID: &fooNode.ID}
+	err = cont.DB.Create(&barNode).Error
+	assert.Nil(t, err)
+
+	bazNode := Node{PathSegment: "baz"}
+	err = cont.DB.Create(&bazNode).Error
+	assert.Nil(t, err)
+
+	t.Run("ItemsFound", func(t *testing.T) {
+		tester(t, http.StatusOK, []Node{fooNode, bazNode})
+	})
+
 }

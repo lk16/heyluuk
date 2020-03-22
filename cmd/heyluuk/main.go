@@ -12,9 +12,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/lk16/heyluuk/internal/redirect"
+	"gopkg.in/romanyx/recaptcha.v1"
 )
 
 var (
+	captchaSecretKey = os.Getenv("CAPTCHA_SECRET_KEY")
 	postgresDB       = os.Getenv("POSTGRES_DB")
 	postgresUser     = os.Getenv("POSTGRES_USER")
 	postgresPassword = os.Getenv("POSTGRES_PASSWORD")
@@ -56,12 +58,16 @@ func main() {
 		templates: template.Must(template.ParseGlob("./web/template/*.html")),
 	}
 
-	controller := &redirect.Controller{DB: db}
+	controller := &redirect.Controller{
+		DB:      db,
+		Captcha: recaptcha.New(captchaSecretKey)}
 
 	e.GET("/*", controller.Redirect)
 	e.GET("/at/this", controller.NewLinkGet)
-	e.POST("/at/this", controller.NewLinkPost)
 
+	e.POST("/api/link", controller.PostLink)
+	e.GET("/api/node/:id", controller.GetNode)
+	e.GET("/api/node/root", controller.GetNodeRoot)
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))
 }

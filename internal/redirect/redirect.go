@@ -6,16 +6,16 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
-	"gopkg.in/romanyx/recaptcha.v1"
+	"github.com/lk16/heyluuk/internal"
 )
 
 var (
-	captchaSecretKey = os.Getenv("CAPTCHA_SECRET_KEY")
-	captchaSiteKey   = os.Getenv("CAPTCHA_SITE_KEY")
+	captchaSiteKey = os.Getenv("CAPTCHA_SITE_KEY")
 
 	errEmptyPath           = errors.New("Cannot get link for empty path")
 	errEmptyRedirectURL    = errors.New("No redirect URL found")
@@ -26,6 +26,7 @@ var (
 	errLinkPointsElsewhere = errors.New("Link exists already and redirects elsewhere")
 	errLinkExists          = errors.New("Link exists already")
 	errPathTooLong         = errors.New("Path is too long")
+	errInvalidLink         = errors.New("Link is invalid")
 
 	pathRegex = regexp.MustCompile("[a-z0-9/-]*")
 )
@@ -55,7 +56,8 @@ func Migrate(db *gorm.DB) error {
 
 // Controller supplies some additional context for all request handlers
 type Controller struct {
-	DB *gorm.DB
+	DB      *gorm.DB
+	Captcha internal.CaptchaVerifier
 }
 
 func (cont *Controller) getLink(pathSegments []string) (string, error) {
@@ -170,6 +172,10 @@ func verifyAndSplitPath(path string) (segments []string, err error) {
 func verifyURL(URL string) (string, error) {
 	// TODO test we get HTTP 2xx and test for timeout
 
+	if strings.Contains(URL, "heylu.uk") {
+		return "", errInvalidLink
+	}
+
 	if !strings.HasPrefix(URL, "http://") && !strings.HasPrefix(URL, "https://") {
 		URL = "http://" + URL
 	}
@@ -191,7 +197,7 @@ func (cont *Controller) insertNewLink(URL string, segments []string) error {
 		parentID := node.ID
 		var where []interface{}
 
-		// GORM ignores NULL values in Find(...) and similar, so we work-around it
+		// GORM ignores NULL values in Find(...) and similar, so we work around it
 		if i == 0 {
 			where = []interface{}{
 				"path_segment = ? AND parent_id IS NULL", segment}
@@ -237,35 +243,91 @@ func (cont *Controller) insertNewLink(URL string, segments []string) error {
 	return errLinkExists
 }
 
-// NewLinkPost is a page that handles POST request to create a new link
-func (cont *Controller) NewLinkPost(c echo.Context) error {
+// PostLink handles POST requests for creating new links
+func (cont *Controller) PostLink(c echo.Context) error {
 
-	r := recaptcha.New(captchaSecretKey)
-	res, err := r.Verify(c.FormValue("g-recaptcha-response"))
+	body := PostLinkBody{}
+
+	if err := c.Bind(&body); err != nil {
+		response := ErrorResponse{err.Error()}
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	res, err := cont.Captcha.Verify(body.Recaptcha)
+
+	linkResponse := CreateLinkResponse{
+		Shortcut: body.Path,
+		Redirect: body.URL}
 
 	if err != nil {
-		return err
+		log.Printf("Recaptcha error: %s", err.Error())
 	}
 
-	if !res.Success {
-		return c.String(http.StatusOK, "AWW")
+	if err != nil || !res.Success {
+		response := ErrorResponse{"Recaptcha verification failed"}
+		return c.JSON(http.StatusBadRequest, response)
 	}
-
-	URL := c.FormValue("url")
-	path := c.FormValue("path")
 
 	var segments []string
-	if segments, err = verifyAndSplitPath(path); err != nil {
-		return err
+	if segments, err = verifyAndSplitPath(body.Path); err != nil {
+		response := ErrorResponse{"Invalid shortcut"}
+		return c.JSON(http.StatusBadRequest, response)
 	}
 
+	linkResponse.Shortcut = "/" + strings.Join(segments, "/")
+
+	var URL = body.URL
 	if URL, err = verifyURL(URL); err != nil {
-		return err
+		response := ErrorResponse{"Invalid redirect link"}
+		return c.JSON(http.StatusBadRequest, response)
 	}
+
+	linkResponse.Redirect = URL
 
 	if err = cont.insertNewLink(URL, segments); err != nil {
-		return err
+		response := ErrorResponse{"Saving new link failed: " + err.Error()}
+		return c.JSON(http.StatusInternalServerError, response)
 	}
 
-	return c.String(http.StatusOK, "YAY")
+	return c.JSON(http.StatusCreated, linkResponse)
+}
+
+// GetNode returns a node by ID
+func (cont *Controller) GetNode(c echo.Context) error {
+
+	IDString := c.Param("id")
+
+	ID, err := strconv.Atoi(IDString)
+	if err != nil {
+		response := ErrorResponse{"Invalid id parameter"}
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	var node Node
+	err = cont.DB.Find(&node, &Node{ID: uint(ID)}).Error
+
+	if gorm.IsRecordNotFoundError(err) {
+		return c.JSON(http.StatusNotFound, nil)
+	}
+
+	if err != nil {
+		log.Printf("GetNode error: %s", err.Error())
+		return c.JSON(http.StatusInternalServerError, nil)
+	}
+
+	return c.JSON(http.StatusOK, node)
+}
+
+// GetNodeRoot returns all root nodes
+func (cont *Controller) GetNodeRoot(c echo.Context) error {
+
+	var nodes []Node
+	err := cont.DB.Find(&nodes, "parent_id IS NULL").Error
+
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return c.JSON(http.StatusInternalServerError, nil)
+	}
+
+	return c.JSON(http.StatusOK, nodes)
+
 }
