@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"html/template"
-	"io"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/lk16/heyluuk/internal"
 	"github.com/lk16/heyluuk/internal/redirect"
 	"gopkg.in/romanyx/recaptcha.v1"
 )
@@ -24,12 +24,8 @@ var (
 
 const postgresHost = "db"
 
-type Template struct {
-	templates *template.Template
-}
-
-func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
+func Index(c echo.Context) error {
+	return c.Render(http.StatusOK, "index.html", nil)
 }
 
 func main() {
@@ -54,15 +50,17 @@ func main() {
 
 	e.Use(middleware.Recover())
 
-	e.Renderer = &Template{
-		templates: template.Must(template.ParseGlob("./web/template/*.html")),
-	}
+	e.Renderer = internal.NewTemplateRenderer()
 
 	controller := &redirect.Controller{
 		DB:      db,
 		Captcha: recaptcha.New(captchaSecretKey)}
 
 	e.GET("/*", controller.Redirect)
+
+	e.Static("/static", "./web/static")
+	e.GET("/index", Index)
+
 	e.GET("/at/this", controller.NewLinkGet)
 
 	e.POST("/api/link", controller.PostLink)
