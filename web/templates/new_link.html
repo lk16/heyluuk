@@ -4,7 +4,6 @@
     $(document).ready(function () {
 
         $("#form").submit(function (e) {
-            e.preventDefault();
 
             var array = $("#form").serializeArray();
             var body = {};
@@ -18,29 +17,38 @@
                 url: '/api/link',
                 data: JSON.stringify(body),
                 success: function (result) {
-                    console.log(result);
+                    var message = "Your link <a target='_blank' href='" + result['shortcut'] + "'>" + window.location.host + result['shortcut'] + "</a> has been created.";
+                    $("#form-alert").html(message).removeClass("alert-danger").addClass("alert-succes").show();
+                    $("#form-path").val('');
+                    $("#form-url").val('');
                 },
                 error: function (xhr, resp, text) {
-                    console.log(xhr, resp, text);
+                    var message = "Error: " + xhr.responseJSON["error"];
+                    $("#form-alert").html(message).removeClass("alert-success").addClass("alert-danger").show();
                 }
             });
+
+            return false;
         });
     });
 </script>
 
 <div class="m-3">
+    <div id="form-alert" class="alert alert-success" role="alert" style="display:none;">
+    </div>
     <form class="form-inline" action="" id="form">
         <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" />
         <div class="input-group form-group mx-sm-2 mb-2">
             <div class="input-group-prepend">
                 <span class="input-group-text" id="inputGroupPrepend">https://heylu.uk/</span>
             </div>
-            <input type="text" name="path" class="form-control" placeholder="at/my/amazing/thing" aria-describedby="inputGroupPrepend" required>
+            <input type="text" id='form-path' name="path" class="form-control" placeholder="at/my/amazing/thing"
+                aria-describedby="inputGroupPrepend" required />
         </div>
         <div class="input-group form-group mx-sm-2 mb-2">
-            <input type="text" name="url" class="form-control" placeholder="example.org/something">
+            <input type="text" id='form-url' name="url" class="form-control" placeholder="example.org/something" required />
         </div>
-        <button type="submit" id="submit" class="btn btn-primary mx-sm-2 mb-2">Create link</button>
+        <button id="submit" class="btn btn-primary mx-sm-2 mb-2">Create link</button>
     </form>
 </div>
 {{ end }}

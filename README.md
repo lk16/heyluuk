@@ -20,15 +20,15 @@ This project aims to:
     - [ ] create views
         - [x] redirecting
         - [ ] JSON API
-            - [x] get: GET `/api/node/<id>`
+            - [ ] get by parent id: GET `/api/node/?parent=<id>`
+            - [x] root nodes: GET `/api/node/root`
             - [x] create: POST `/api/link` with JSON body
-            - [ ] check: GET `/api/link/check
             - [ ] search: GET `/api/link/?q=query`
         - [ ] nice web UI
             - [ ] creating links
                 - [x] basic form
-                - [ ] check if link is available with ajax
-                - [ ] feedback on submission
+                - [x] feedback on submission
+                - [ ] fix bug: cannot post twice without refresh / get rid of recaptcha
             - [ ] listing tree structure
             - [ ] searching
         - [ ] 404 page

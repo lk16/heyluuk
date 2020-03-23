@@ -15,13 +15,13 @@ func (Node) TableName() string {
 
 // ErrorResponse is a JSON response model
 type ErrorResponse struct {
-	Error string
+	Error string `json:"error"`
 }
 
 // CreateLinkResponse is a JSON response model
 type CreateLinkResponse struct {
-	Shortcut string
-	Redirect string
+	Shortcut string `json:"shortcut"`
+	Redirect string `json:"redirect"`
 }
 
 // LinkTreeResponse is a JSON response model
