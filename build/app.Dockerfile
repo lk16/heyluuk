@@ -1,11 +1,14 @@
 FROM golang:1.14-alpine
 
-RUN apk update && apk upgrade && apk add --no-cache bash
+RUN apk update && apk upgrade && apk add --no-cache bash npm
 
 LABEL maintainer="Luuk Verweij <luuk_verweij@msn.com>"
 
-WORKDIR /app
+ADD ./npm /npm
+WORKDIR /npm
+RUN npm install
 
+WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 

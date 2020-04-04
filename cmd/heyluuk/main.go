@@ -54,6 +54,10 @@ func main() {
 	e.GET("/*", controller.Redirect)
 
 	e.Static("/static", "./web/static")
+	e.Static("/static/jquery", "/npm/node_modules/jquery/dist")
+	e.Static("/static/bootstrap", "/npm/node_modules/bootstrap/dist")
+	e.Static("/static/patternfly-bootstrap-treeview", "/npm/node_modules/patternfly-bootstrap-treeview/dist")
+
 	e.GET("/", controller.Index)
 	e.GET("/at/my/faq", controller.Faq)
 	e.GET("/at/my/predictions", controller.Predictions)

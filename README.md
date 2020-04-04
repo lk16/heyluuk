@@ -17,22 +17,26 @@ This project aims to:
     - [x] create adminer
     - [x] create models
     - [x] try gorm migrations
-    - [ ] create views
-        - [x] redirecting
-        - [ ] JSON API
-            - [ ] get by parent id: GET `/api/node/?parent=<id>`
-            - [x] root nodes: GET `/api/node/root`
-            - [x] create: POST `/api/link` with JSON body
-            - [ ] search: GET `/api/link/?q=query`
-        - [ ] nice web UI
-            - [ ] creating links
-                - [x] basic form
-                - [x] feedback on submission
-                - [ ] fix bug: cannot post twice without refresh / get rid of recaptcha
-                - [ ] ban URLs that redirect
-            - [ ] listing tree structure
-            - [ ] searching
-        - [ ] 404 page
+    - [x] redirecting
+    - [ ] JSON API
+        - [ ] get by parent id: GET `/api/node/?parent=<id>`
+            - [x] implement
+            - [ ] test
+        - [x] root nodes: GET `/api/node/root`
+        - [x] create: POST `/api/link` with JSON body
+        - [ ] search: GET `/api/link/?q=query`
+    - [ ] nice web UI
+        - [ ] creating links
+            - [x] basic form
+            - [x] feedback on submission
+            - [ ] fix bug
+                - [ ] cannot post twice without refresh / get rid of recaptcha
+                - [ ] reload tree structure
+        - [ ] listing tree structure
+        - [ ] searching
+    - [ ] ban URLs that redirect
+    - [ ] ban certain sites
+    - [ ] 404 page
 
 - [ ] Predictions
     - [ ] create models
@@ -40,13 +44,13 @@ This project aims to:
         - [ ] listing
         - [ ] creating
 
-- [ ] Good style
+- [ ] Other stuff
     - [ ] test coverage
     - [ ] CI
     - [ ] linting
     - [ ] log more in redirect handler
-    - [x] use static jquery
     - [ ] human readable logs
     - [ ] remove junk files
     - [ ] unify naming of path segments
-    - [ ] use npm to install jquery, bootstrap, bootstrap-treeview?
+    - [x] use npm to install jquery, bootstrap, bootstrap-treeview?
+    - [ ] write a toc

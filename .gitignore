@@ -1,2 +1,4 @@
 .env
 data/
+npm/node_modules
+*.code-workspace

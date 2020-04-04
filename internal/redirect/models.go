@@ -24,17 +24,6 @@ type CreateLinkResponse struct {
 	Redirect string `json:"redirect"`
 }
 
-// LinkTreeResponse is a JSON response model
-type LinkTreeResponse struct {
-	Nodes map[string]LinkTree
-}
-
-// LinkTree is used by a JSON response model
-type LinkTree struct {
-	Children map[string]LinkTree `json:",omitempty"`
-	URL      string              `json:",omitempty"`
-}
-
 // PostLinkBody is used by a JSON request model
 type PostLinkBody struct {
 	Recaptcha string `json:"g-recaptcha-response"`
