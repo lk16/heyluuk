@@ -11,7 +11,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
-	"github.com/lk16/heyluuk/internal"
+	"github.com/lk16/heyluuk/internal/captcha"
 )
 
 var (
@@ -57,7 +57,7 @@ func Migrate(db *gorm.DB) error {
 // Controller supplies some additional context for all request handlers
 type Controller struct {
 	DB      *gorm.DB
-	Captcha internal.CaptchaVerifier
+	Captcha captcha.CaptchaVerifier
 }
 
 func (cont *Controller) getLink(pathSegments []string) (string, error) {

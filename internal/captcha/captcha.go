@@ -1,4 +1,4 @@
-package internal
+package captcha
 
 import (
 	"github.com/stretchr/testify/mock"

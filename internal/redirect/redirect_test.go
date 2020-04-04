@@ -16,7 +16,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo/v4"
-	"github.com/lk16/heyluuk/internal"
+	"github.com/lk16/heyluuk/internal/captcha"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gopkg.in/romanyx/recaptcha.v1"
@@ -469,7 +469,7 @@ func TestControllerNewLinkPost(t *testing.T) {
 
 	e := echo.New()
 
-	mockCaptchaApprover := &internal.MockCaptchaVerifier{}
+	mockCaptchaApprover := &captcha.MockCaptchaVerifier{}
 	mockCaptchaApprover.On("Verify", mock.Anything).Times(99).
 		Return(&recaptcha.Response{Success: true}, nil)
 
@@ -510,7 +510,7 @@ func TestControllerNewLinkPost(t *testing.T) {
 		bodyBytes, err := json.Marshal(body)
 		assert.Nil(t, err)
 
-		mockCaptchaFailer := &internal.MockCaptchaVerifier{}
+		mockCaptchaFailer := &captcha.MockCaptchaVerifier{}
 		mockCaptchaFailer.On("Verify", mock.Anything).Once().
 			Return(&recaptcha.Response{Success: false}, nil)
 
@@ -530,7 +530,7 @@ func TestControllerNewLinkPost(t *testing.T) {
 		bodyBytes, err := json.Marshal(body)
 		assert.Nil(t, err)
 
-		mockCaptchaFailer := &internal.MockCaptchaVerifier{}
+		mockCaptchaFailer := &captcha.MockCaptchaVerifier{}
 		mockCaptchaFailer.On("Verify", mock.Anything).Once().
 			Return((*recaptcha.Response)(nil), errors.New(""))
 

@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net/http"
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
@@ -18,11 +19,18 @@ type TemplateRenderer struct {
 
 func NewTemplateRenderer() *TemplateRenderer {
 
-	t := &TemplateRenderer{templates: make(map[string]*template.Template)}
-	t.templates["index.html"] = template.Must(template.ParseFiles(filepath.Join(templateRoot, "index.html"), filepath.Join(templateRoot, "base.html")))
-	t.templates["faq.html"] = template.Must(template.ParseFiles(filepath.Join(templateRoot, "faq.html"), filepath.Join(templateRoot, "base.html")))
-	t.templates["predictions.html"] = template.Must(template.ParseFiles(filepath.Join(templateRoot, "predictions.html"), filepath.Join(templateRoot, "base.html")))
-	t.templates["new_link.html"] = template.Must(template.ParseFiles(filepath.Join(templateRoot, "new_link.html"), filepath.Join(templateRoot, "base.html")))
+	t := &TemplateRenderer{
+		templates: make(map[string]*template.Template)}
+
+	files := []string{"index.html", "faq.html", "predictions.html", "new_link.html"}
+
+	for _, file := range files {
+		t.templates[file] = template.Must(
+			template.ParseFiles(
+				filepath.Join(templateRoot, file),
+				filepath.Join(templateRoot, "base.html")))
+	}
+
 	return t
 }
 
@@ -37,4 +45,15 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 		log.Printf("template rendering error: %s", err.Error())
 	}
 	return err
+}
+
+type renderData struct {
+	CaptchaSiteKey string
+}
+
+func renderTemplateView(templateName string) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		data := renderData{CaptchaSiteKey: captchaSiteKey}
+		return c.Render(http.StatusOK, templateName, data)
+	}
 }

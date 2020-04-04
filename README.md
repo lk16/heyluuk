@@ -19,7 +19,7 @@ This project aims to:
     - [x] try gorm migrations
     - [x] redirecting
     - [ ] JSON API
-        - [ ] get by parent id: GET `/api/node/?parent=<id>`
+        - [ ] get by parent id: GET `/api/node/:id/parent`
             - [x] implement
             - [ ] test
         - [x] root nodes: GET `/api/node/root`
