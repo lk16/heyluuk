@@ -29,6 +29,7 @@ This project aims to:
                 - [x] basic form
                 - [x] feedback on submission
                 - [ ] fix bug: cannot post twice without refresh / get rid of recaptcha
+                - [ ] ban URLs that redirect
             - [ ] listing tree structure
             - [ ] searching
         - [ ] 404 page
@@ -46,3 +47,6 @@ This project aims to:
     - [ ] log more in redirect handler
     - [x] use static jquery
     - [ ] human readable logs
+    - [ ] remove junk files
+    - [ ] unify naming of path segments
+    - [ ] use npm to install jquery, bootstrap, bootstrap-treeview?

@@ -1,5 +1,4 @@
 {{ define "content" }}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script>
     $(document).ready(function () {
 
@@ -51,4 +50,78 @@
         <button id="submit" class="btn btn-primary mx-sm-2 mb-2">Create link</button>
     </form>
 </div>
+<hr />
+<div class="col-sm-4">
+    <h3>Existing link tree</h3>
+    <div id="myTree"></div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+    $.ajax({
+        url: '/api/node/root',
+        success: function(data, status, xhr) {
+
+            var rootNodes = [];
+            $(data).each(function(index, element){
+
+                var text = element.path_segment;
+
+                if(element['url'] !== '') {
+                    text = '<a href="' + element['url'] + '">' + text + '</a>';
+                }
+
+                rootNodes.push({
+                    text: text,
+                    lazyLoad: true,
+                    id: element.id,
+                    selectable: false
+                });
+            });
+
+            var treeData = [
+                {
+                    text: 'heylu.uk',
+                    nodes: rootNodes
+                }
+            ];
+
+            lazyLoad = function(node, dataHandler) {
+
+                var result = "";
+                $.ajax({
+                    url: '/api/node/' + node.id + '/children',
+                    type: 'GET',
+                }).then(function(data){
+                    var children = [];
+                    $(data).each(function(index, element){
+
+                        var text = element.path_segment;
+
+                        if(element['url'] !== '') {
+                            text = '<a href="' + element['url'] + '">' + text + '</a>';
+                        }
+
+                        children.push({
+                            text: text,
+                            lazyLoad: true,
+                            id: element.id,
+                            selectable: false
+                        });
+                    });
+
+                    dataHandler(children);
+                });
+            }
+
+            $('#myTree').treeview({
+                data: treeData,
+                lazyLoad: lazyLoad,
+                showBorder: false
+            });
+        }
+    });
+});
+</script>
 {{ end }}

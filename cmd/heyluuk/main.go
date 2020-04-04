@@ -62,7 +62,9 @@ func main() {
 
 	e.POST("/api/link", controller.PostLink)
 	e.GET("/api/node/:id", controller.GetNode)
+	e.GET("/api/node/:id/children", controller.GetNodeChildren)
 	e.GET("/api/node/root", controller.GetNodeRoot)
+
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))
 }

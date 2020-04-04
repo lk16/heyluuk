@@ -2,10 +2,10 @@ package redirect
 
 // Node is a database model
 type Node struct {
-	ID          uint   `gorm:"primary_key"`
-	ParentID    *uint  `gorm:"unique_index:path_segment_parent_id"`
-	PathSegment string `gorm:"not null;unique_index:path_segment_parent_id"`
-	URL         string `gorm:"not null"`
+	ID          uint   `gorm:"primary_key" json:"id"`
+	ParentID    *uint  `gorm:"unique_index:path_segment_parent_id" json:"parent"`
+	PathSegment string `gorm:"not null;unique_index:path_segment_parent_id" json:"path_segment"`
+	URL         string `gorm:"not null" json:"url"`
 }
 
 // TableName returns the name of the table associated with this model

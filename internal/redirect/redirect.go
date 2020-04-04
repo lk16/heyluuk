@@ -331,3 +331,26 @@ func (cont *Controller) GetNodeRoot(c echo.Context) error {
 	return c.JSON(http.StatusOK, nodes)
 
 }
+
+// GetNodeChildren returns nodes whose parent is the specified ID
+func (cont *Controller) GetNodeChildren(c echo.Context) error {
+
+	IDString := c.Param("id")
+
+	ID, err := strconv.Atoi(IDString)
+	if err != nil {
+		response := ErrorResponse{"Invalid id parameter"}
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	var nodes []Node
+	parentID := uint(ID)
+	err = cont.DB.Find(&nodes, &Node{ParentID: &parentID}).Error
+
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		log.Printf("GetNodeChildren error: %s", err.Error())
+		return c.JSON(http.StatusInternalServerError, nil)
+	}
+
+	return c.JSON(http.StatusOK, nodes)
+}

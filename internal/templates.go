@@ -4,6 +4,7 @@ import (
 	"errors"
 	"html/template"
 	"io"
+	"log"
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
@@ -30,5 +31,10 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 	if !ok {
 		return errors.New("template not found")
 	}
-	return template.ExecuteTemplate(w, "base", data)
+
+	err := template.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		log.Printf("template rendering error: %s", err.Error())
+	}
+	return err
 }

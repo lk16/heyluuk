@@ -48,6 +48,8 @@
 <!-- Custom styles for this template -->
 <link href="/static/simple-sidebar.css" rel="stylesheet">
 
+<link href="/static/bootstrap-treeview.min.css" rel="stylesheet" type="text/css" />
+
 <script src="https://www.google.com/recaptcha/api.js?render={{ .CaptchaSiteKey }}"></script>
 <script>
 grecaptcha.ready(function() {
@@ -56,6 +58,9 @@ grecaptcha.ready(function() {
     });
 });
 </script>
+<script src="/static/jquery.min.js"></script>
+<script src="/static/bootstrap.bundle.min.js"></script>
+<script src="/static/bootstrap-treeview.min.js"></script>
 {{ end }}
 
 {{ define "sidebar" }}
@@ -108,8 +113,6 @@ grecaptcha.ready(function() {
 
 {{ define "footer" }}
 <!-- Bootstrap core JavaScript -->
-<script src="/static/jquery.min.js"></script>
-<script src="/static/bootstrap.bundle.min.js"></script>
 
 <!-- Menu Toggle Script -->
 <script>
@@ -118,29 +121,4 @@ grecaptcha.ready(function() {
         $("#wrapper").toggleClass("toggled");
     });
 </script>
-{{ end }}
-
-{{ define "foo" }}
-<h1 class="mt-4">Simple Sidebar</h1>
-<p>The starting state of the menu will appear collapsed on smaller screens, and will appear non-collapsed on
-    larger screens. When toggled using the button below, the menu will change.</p>
-<p>Make sure to keep all page content within the <code>#page-content-wrapper</code>. The top navbar is optional,
-    and just for demonstration. Just create an element with the <code>#menu-toggle</code> ID which will toggle the
-    menu when clicked.</p>
-<form>
-    <div class="form-group">
-        <label for="exampleInputEmail1">Email address</label>
-        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
-        <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
-    </div>
-    <div class="form-group">
-        <label for="exampleInputPassword1">Password</label>
-        <input type="password" class="form-control" id="exampleInputPassword1">
-    </div>
-    <div class="form-group form-check">
-        <input type="checkbox" class="form-check-input" id="exampleCheck1">
-        <label class="form-check-label" for="exampleCheck1">Check me out</label>
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
 {{ end }}
