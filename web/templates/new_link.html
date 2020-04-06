@@ -63,7 +63,13 @@ $(document).ready(function(){
         url: '/api/node/root',
         success: function(data, status, xhr) {
 
+            data = data.sort(function(a,b){
+                if(a.path_segment < b.path_segment) { return -1; }
+                return 1;
+            })
+
             var rootNodes = [];
+
             $(data).each(function(index, element){
 
                 var text = element.path_segment;
@@ -83,7 +89,8 @@ $(document).ready(function(){
             var treeData = [
                 {
                     text: 'heylu.uk',
-                    nodes: rootNodes
+                    nodes: rootNodes,
+                    selectable: false,
                 }
             ];
 
@@ -93,7 +100,14 @@ $(document).ready(function(){
                 $.ajax({
                     url: '/api/node/' + node.id + '/children',
                     type: 'GET',
-                }).then(function(data){
+                }).then(
+
+                    function(data){
+                        data = data.sort(function(a,b){
+                        if(a.path_segment < b.path_segment) { return -1; }
+                        return 1;
+                    })
+
                     var children = [];
                     $(data).each(function(index, element){
 
@@ -118,7 +132,11 @@ $(document).ready(function(){
             $('#myTree').treeview({
                 data: treeData,
                 lazyLoad: lazyLoad,
-                showBorder: false
+                showBorder: false,
+                expandIcon: "fas fa-plus",
+                collapseIcon: "fas fa-minus",
+                loadingIcon: "fas fa-ellipsis-v",
+                icon: "fas fa-link"
             });
         }
     });

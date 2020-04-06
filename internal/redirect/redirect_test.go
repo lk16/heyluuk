@@ -714,20 +714,97 @@ func TestControllerNodeRoot(t *testing.T) {
 		tester(t, http.StatusInternalServerError, nil)
 	})
 
-	fooNode := Node{PathSegment: "foo"}
-	err := cont.DB.Create(&fooNode).Error
-	assert.Nil(t, err)
-
-	barNode := Node{PathSegment: "bar", URL: "http://bar/", ParentID: &fooNode.ID}
-	err = cont.DB.Create(&barNode).Error
-	assert.Nil(t, err)
-
-	bazNode := Node{PathSegment: "baz"}
-	err = cont.DB.Create(&bazNode).Error
-	assert.Nil(t, err)
-
 	t.Run("ItemsFound", func(t *testing.T) {
+		fooNode := Node{PathSegment: "foo"}
+		err := cont.DB.Create(&fooNode).Error
+		assert.Nil(t, err)
+
+		barNode := Node{PathSegment: "bar", URL: "http://bar/", ParentID: &fooNode.ID}
+		err = cont.DB.Create(&barNode).Error
+		assert.Nil(t, err)
+
+		bazNode := Node{PathSegment: "baz"}
+		err = cont.DB.Create(&bazNode).Error
+		assert.Nil(t, err)
+
 		tester(t, http.StatusOK, []Node{fooNode, bazNode})
 	})
+}
 
+func TestControllerGetNodeChildren(t *testing.T) {
+	cont := &Controller{DB: db}
+	e := echo.New()
+
+	// clean up after this test finishes
+	defer func() {
+		cont.DB.Delete(&Node{})
+	}()
+
+	tester := func(t *testing.T, nodeID string, expectedStatusCode int, expectedJSONResponse interface{}) {
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.SetPath("/api/node/:id/children")
+		c.SetParamNames("id")
+		c.SetParamValues(nodeID)
+
+		err := cont.GetNodeChildren(c)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedStatusCode, rec.Code)
+
+		expectedJSONResponseBytes, err := json.Marshal(expectedJSONResponse)
+		assert.JSONEq(t, string(expectedJSONResponseBytes), rec.Body.String())
+	}
+
+	t.Run("InvalidParameter", func(t *testing.T) {
+		tester(t, "foo", http.StatusBadRequest, ErrorResponse{"Invalid id parameter"})
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		tester(t, "1", http.StatusOK, []Node{})
+	})
+
+	t.Run("DBError", func(t *testing.T) {
+		cont.DB.AddError(errors.New(""))
+		defer func() {
+			cont.DB.Error = nil
+		}()
+
+		tester(t, "1", http.StatusInternalServerError, nil)
+	})
+
+	t.Run("NoChildrenFound", func(t *testing.T) {
+
+		defer func() {
+			cont.DB.Delete(&Node{})
+		}()
+
+		fooNode := Node{PathSegment: "foo"}
+		err := cont.DB.Create(&fooNode).Error
+		assert.Nil(t, err)
+
+		tester(t, fmt.Sprintf("%d", fooNode.ID), http.StatusOK, []Node{})
+	})
+
+	t.Run("ChildFound", func(t *testing.T) {
+
+		defer func() {
+			cont.DB.Delete(&Node{})
+		}()
+
+		fooNode := Node{PathSegment: "foo"}
+		err := cont.DB.Create(&fooNode).Error
+		assert.Nil(t, err)
+
+		barNode := Node{PathSegment: "bar", URL: "http://bar/", ParentID: &fooNode.ID}
+		err = cont.DB.Create(&barNode).Error
+		assert.Nil(t, err)
+
+		bazNode := Node{PathSegment: "baz"}
+		err = cont.DB.Create(&bazNode).Error
+		assert.Nil(t, err)
+
+		tester(t, fmt.Sprintf("%d", fooNode.ID), http.StatusOK, []Node{barNode})
+	})
 }

@@ -3,8 +3,8 @@ package redirect
 // Node is a database model
 type Node struct {
 	ID          uint   `gorm:"primary_key" json:"id"`
-	ParentID    *uint  `gorm:"unique_index:path_segment_parent_id" json:"parent"`
-	PathSegment string `gorm:"not null;unique_index:path_segment_parent_id" json:"path_segment"`
+	ParentID    *uint  `gorm:"unique_index:path_segment_parent_id;index:parent_idx" json:"parent"`
+	PathSegment string `gorm:"not null;unique_index:path_segment_parent_id;index:path_idx" json:"path_segment"`
 	URL         string `gorm:"not null" json:"url"`
 }
 

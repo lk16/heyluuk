@@ -55,6 +55,7 @@ func GetServer() *echo.Echo {
 	e.Static("/static/jquery", "/npm/node_modules/jquery/dist")
 	e.Static("/static/bootstrap", "/npm/node_modules/bootstrap/dist")
 	e.Static("/static/patternfly-bootstrap-treeview", "/npm/node_modules/patternfly-bootstrap-treeview/dist")
+	e.Static("/static/font-awesome", "/npm/node_modules/@fortawesome/fontawesome-free")
 
 	e.GET("/", redirectView("/at/my/site"))
 	e.GET("/at/my/site", renderTemplateView("index.html"))

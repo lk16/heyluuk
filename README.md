@@ -19,9 +19,9 @@ This project aims to:
     - [x] try gorm migrations
     - [x] redirecting
     - [ ] JSON API
-        - [ ] get by parent id: GET `/api/node/:id/parent`
+        - [x] get by parent id: GET `/api/node/:id/parent`
             - [x] implement
-            - [ ] test
+            - [x] test
         - [x] root nodes: GET `/api/node/root`
         - [x] create: POST `/api/link` with JSON body
         - [ ] search: GET `/api/link/?q=query`
@@ -33,6 +33,9 @@ This project aims to:
                 - [ ] cannot post twice without refresh / get rid of recaptcha
                 - [ ] reload tree structure
         - [ ] listing tree structure
+            - [x] showing tree
+            - [x] sorting
+            - [x] icons not showing
         - [ ] searching
     - [ ] ban URLs that redirect
     - [ ] ban certain sites
@@ -54,3 +57,4 @@ This project aims to:
     - [ ] unify naming of path segments
     - [x] use npm to install jquery, bootstrap, bootstrap-treeview?
     - [ ] write a toc
+    - [ ] bring back button to show/hide sidebar on mobile
