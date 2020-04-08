@@ -29,17 +29,20 @@ This project aims to:
         - [ ] creating links
             - [x] basic form
             - [x] feedback on submission
-            - [ ] fix bug
+            - [ ] ban URLs that redirect
+            - [ ] ban certain sites
+            - [ ] fix bugs
                 - [ ] cannot post twice without refresh / get rid of recaptcha
                 - [ ] reload tree structure
         - [ ] listing tree structure
             - [x] showing tree
             - [x] sorting
             - [x] icons not showing
+            - [ ] fix missing indentation on leaf nodes
+        - [ ] toggle open links in new window
+        - [ ] fix colors
         - [ ] searching
-    - [ ] ban URLs that redirect
-    - [ ] ban certain sites
-    - [ ] 404 page
+        - [x] 404 page
 
 - [ ] Predictions
     - [ ] create models

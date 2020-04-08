@@ -106,14 +106,14 @@ func (cont *Controller) Redirect(c echo.Context) error {
 
 	if err != nil {
 		log.Printf("Error for path %s: %s", path, err.Error())
-		return c.String(http.StatusNotFound, "Not Found\n")
+		return c.Render(http.StatusNotFound, "not_found.html", nil)
 	}
 
 	url, err := cont.getLink(splitPath)
 
 	if err != nil {
 		log.Printf("Error for path %s: %s", path, err.Error())
-		return c.String(http.StatusNotFound, "Not Found\n")
+		return c.Render(http.StatusNotFound, "not_found.html", nil)
 	}
 
 	return c.Redirect(http.StatusFound, url)

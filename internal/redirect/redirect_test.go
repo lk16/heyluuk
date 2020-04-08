@@ -133,6 +133,12 @@ func TestControllerGetLink(t *testing.T) {
 	}
 }
 
+type dummyRenderer struct{}
+
+func (t *dummyRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return nil
+}
+
 func TestControllerRedirect(t *testing.T) {
 
 	// clean up after this test finishes
@@ -149,6 +155,7 @@ func TestControllerRedirect(t *testing.T) {
 	assert.Nil(t, err)
 
 	e := echo.New()
+	e.Renderer = &dummyRenderer{}
 	cont := &Controller{DB: db}
 
 	t.Run("postRoot", func(t *testing.T) {
