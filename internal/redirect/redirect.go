@@ -4,10 +4,12 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
@@ -26,15 +28,19 @@ var (
 	errLinkPointsElsewhere = errors.New("Link exists already and redirects elsewhere")
 	errLinkExists          = errors.New("Link exists already")
 	errPathTooLong         = errors.New("Path is too long")
-	errInvalidLink         = errors.New("Link is invalid")
+	errURLTimeout          = errors.New("URL responds too slowly")
+	errURLRedirects        = errors.New("URL redirects")
+	errURLStatusCode       = errors.New("URL responds with unexpected status code")
 
 	pathRegex = regexp.MustCompile("[a-z0-9/-]*")
 )
 
 const (
-	maxPathDepth     = 5
-	maxSegmentLength = 20
-	maxPathLength    = (maxPathDepth * maxSegmentLength) + maxPathDepth
+	maxPathDepth        = 5
+	maxSegmentLength    = 20
+	maxPathLength       = (maxPathDepth * maxSegmentLength) + maxPathDepth
+	linkVerifyUserAgent = "heylu.uk link checker/0.0"
+	linkVerifyTimeout   = time.Second
 )
 
 // Migrate does automatic DB model migrations
@@ -170,14 +176,45 @@ func verifyAndSplitPath(path string) (segments []string, err error) {
 }
 
 func verifyURL(URL string) (string, error) {
-	// TODO test we get HTTP 2xx and test for timeout
-
-	if strings.Contains(URL, "heylu.uk") {
-		return "", errInvalidLink
-	}
 
 	if !strings.HasPrefix(URL, "http://") && !strings.HasPrefix(URL, "https://") {
 		URL = "http://" + URL
+	}
+
+	parsedURL, err := url.Parse(URL)
+	if err != nil {
+		return "", err
+	}
+
+	client := http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return errURLRedirects
+		},
+		Timeout: linkVerifyTimeout,
+	}
+
+	request := &http.Request{
+		Method: "GET",
+		URL:    parsedURL,
+		Header: make(http.Header),
+	}
+	request.Header.Add("User-Agent", linkVerifyUserAgent)
+
+	response, err := client.Do(request)
+	if err != nil {
+		if urlErr, ok := err.(*url.Error); ok {
+			if urlErr.Timeout() {
+				return "", errURLTimeout
+			}
+			return "", urlErr.Err
+		}
+		return "", err
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return "", errURLStatusCode
 	}
 
 	return URL, nil

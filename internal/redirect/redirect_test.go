@@ -2,6 +2,7 @@ package redirect
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,10 +13,12 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/lk16/heyluuk/internal/captcha"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -582,7 +585,7 @@ func TestControllerNewLinkPost(t *testing.T) {
 	})
 
 	t.Run("DBError", func(t *testing.T) {
-		body := PostLinkBody{Path: "a", URL: "a"}
+		body := PostLinkBody{Path: "a", URL: "http://example.com/"}
 		bodyBytes, err := json.Marshal(body)
 		assert.Nil(t, err)
 
@@ -598,13 +601,100 @@ func TestControllerNewLinkPost(t *testing.T) {
 	})
 
 	t.Run("OK", func(t *testing.T) {
-		body := PostLinkBody{Path: "a", URL: "b"}
+		body := PostLinkBody{Path: "a", URL: "http://example.com/"}
 		bodyBytes, err := json.Marshal(body)
 		assert.Nil(t, err)
 
 		expectedStatusCode := http.StatusCreated
-		expectedJSON := CreateLinkResponse{Shortcut: "/" + body.Path, Redirect: "http://" + body.URL}
+		expectedJSON := CreateLinkResponse{Shortcut: "/" + body.Path, Redirect: body.URL}
 		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 1)
+	})
+}
+
+func TestVerifyURL(t *testing.T) {
+	testServer := echo.New()
+
+	testServer.GET("/200/fast", func(c echo.Context) error {
+		return c.String(http.StatusOK, "")
+	})
+
+	testServer.GET("/200/slow", func(c echo.Context) error {
+		time.Sleep(linkVerifyTimeout + time.Second)
+		return c.String(http.StatusOK, "")
+	})
+
+	testServer.GET("/301", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "http://example.com/")
+	})
+
+	testServer.GET("/302", func(c echo.Context) error {
+		return c.Redirect(http.StatusFound, "http://example.com/")
+	})
+
+	testServer.GET("/404", func(c echo.Context) error {
+		return c.String(http.StatusNotFound, "Not Found")
+	})
+
+	testServer.GET("/500", func(c echo.Context) error {
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	})
+
+	testServer.Use(middleware.Logger())
+	testServer.Use(middleware.Recover())
+
+	address := "localhost:9000"
+	go testServer.Start(address)
+	defer testServer.Shutdown(context.Background())
+
+	// wait until testServer is up, there seems no better way
+	for {
+		time.Sleep(5 * time.Millisecond)
+		resp, err := http.Get(fmt.Sprintf("http://%s/200/fast", address))
+		if err == nil {
+			resp.Body.Close()
+			break
+		}
+	}
+
+	tester := func(URL string, expectedURL string, expectedErr error) {
+		URL, err := verifyURL(URL)
+		assert.Equal(t, expectedErr, err)
+		assert.Equal(t, expectedURL, URL)
+	}
+
+	t.Run("OK", func(t *testing.T) {
+		URL := fmt.Sprintf("http://%s/200/fast", address)
+		tester(URL, URL, nil)
+	})
+
+	t.Run("OKWithoutScheme", func(t *testing.T) {
+		URL := fmt.Sprintf("%s/200/fast", address)
+		tester(URL, "http://"+URL, nil)
+	})
+
+	t.Run("TooSlow", func(t *testing.T) {
+		URL := fmt.Sprintf("http://%s/200/slow", address)
+		tester(URL, "", errURLTimeout)
+	})
+
+	t.Run("RedirectWith301", func(t *testing.T) {
+		URL := fmt.Sprintf("http://%s/301", address)
+		tester(URL, "", errURLRedirects)
+	})
+
+	t.Run("RedirectWith302", func(t *testing.T) {
+		URL := fmt.Sprintf("http://%s/302", address)
+		tester(URL, "", errURLRedirects)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		URL := fmt.Sprintf("http://%s/404", address)
+		tester(URL, "", errURLStatusCode)
+	})
+
+	t.Run("InternalServerError", func(t *testing.T) {
+		URL := fmt.Sprintf("http://%s/500", address)
+		tester(URL, "", errURLStatusCode)
 	})
 }
 

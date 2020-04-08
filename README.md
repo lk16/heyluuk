@@ -29,8 +29,8 @@ This project aims to:
         - [ ] creating links
             - [x] basic form
             - [x] feedback on submission
-            - [ ] ban URLs that redirect
-            - [ ] ban certain sites
+            - [x] ban URLs that redirect
+            - [ ] ban URL with static/ and api/ prefixes
             - [ ] fix bugs
                 - [ ] cannot post twice without refresh / get rid of recaptcha
                 - [ ] reload tree structure
