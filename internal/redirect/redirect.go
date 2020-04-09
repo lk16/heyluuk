@@ -12,6 +12,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
+	botstopper "github.com/lk16/heyluuk/internal/bot_stopper"
 )
 
 var (
@@ -59,7 +60,8 @@ func Migrate(db *gorm.DB) error {
 
 // Controller supplies some additional context for all request handlers
 type Controller struct {
-	DB *gorm.DB
+	DB         *gorm.DB
+	BotStopper botstopper.Interface
 }
 
 func (cont *Controller) getLink(pathSegments []string) (string, error) {
@@ -288,6 +290,11 @@ func (cont *Controller) PostLink(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
+	if !cont.BotStopper.Verify(body.Response) {
+		response := ErrorResponse{"Anti-bot challenge failed"}
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
 	linkResponse := CreateLinkResponse{
 		Shortcut: body.Path,
 		Redirect: body.URL}
@@ -378,4 +385,9 @@ func (cont *Controller) GetNodeChildren(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, nodes)
+}
+
+// GetChallenge generates and returns a new anti-bot challenge
+func (cont *Controller) GetChallenge(c echo.Context) error {
+	return c.JSON(http.StatusOK, cont.BotStopper.GetChallenge())
 }

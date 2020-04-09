@@ -9,6 +9,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	botstopper "github.com/lk16/heyluuk/internal/bot_stopper"
 	"github.com/lk16/heyluuk/internal/redirect"
 
 	_ "github.com/jinzhu/gorm/dialects/postgres" // db driver
@@ -43,7 +44,8 @@ func GetServer() *echo.Echo {
 	e.Renderer = NewTemplateRenderer()
 
 	controller := &redirect.Controller{
-		DB: db,
+		DB:         db,
+		BotStopper: botstopper.NewBotStopper(),
 	}
 
 	e.GET("/*", controller.Redirect)
@@ -64,6 +66,7 @@ func GetServer() *echo.Echo {
 	e.GET("/api/node/:id", controller.GetNode)
 	e.GET("/api/node/:id/children", controller.GetNodeChildren)
 	e.GET("/api/node/root", controller.GetNodeRoot)
+	e.GET("/api/challenge", controller.GetChallenge)
 
 	return e
 }

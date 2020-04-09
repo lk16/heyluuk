@@ -17,19 +17,19 @@ const (
 // Challenge is sent to the front-end for the user to answer it to verify if they are a bot
 type Challenge struct {
 	// ID identifies the answer of this challenge when verifying
-	ID string
+	ID string `json:"id"`
 
 	// Question is what the user gets to see
-	Question string
+	Question string `json:"question"`
 }
 
 // Response is used to verify if a user is a bot
 type Response struct {
 	// ID identifies the answer of this challenge
-	ID string
+	ID string `json:"challenge-id"`
 
 	// Answer is the actual answer a user would type on the form
-	Answer string
+	Answer string `json:"challenge-answer"`
 }
 
 type answer struct {
@@ -63,19 +63,19 @@ func (bs *BotStopper) GetChallenge() Challenge {
 
 	switch rand.Intn(4) {
 	case 0:
-		challenge.Question = fmt.Sprintf("%d+%d", a, b)
+		challenge.Question = fmt.Sprintf("%d+%d=", a, b)
 		answer.value = fmt.Sprintf("%d", a+b)
 	case 1:
-		if a > b {
+		if a < b {
 			a, b = b, a
 		}
-		challenge.Question = fmt.Sprintf("%d-%d", a, b)
+		challenge.Question = fmt.Sprintf("%d-%d=", a, b)
 		answer.value = fmt.Sprintf("%d", a-b)
 	case 2:
-		challenge.Question = fmt.Sprintf("%d*%d", a, b)
+		challenge.Question = fmt.Sprintf("%dx%d=", a, b)
 		answer.value = fmt.Sprintf("%d", a*b)
 	case 3:
-		challenge.Question = fmt.Sprintf("%d/%d", a*b, b)
+		challenge.Question = fmt.Sprintf("%d/%d=", a*b, b)
 		answer.value = fmt.Sprintf("%d", a)
 	}
 
@@ -119,7 +119,7 @@ func (bs *BotStopper) saveAnswer(a *answer) string {
 }
 
 // Verify actually checks if a user entered the right answer for a challenge
-func (bs *BotStopper) Verify(response *Response) bool {
+func (bs *BotStopper) Verify(response Response) bool {
 	bs.mutex.Lock()
 	defer bs.mutex.Unlock()
 

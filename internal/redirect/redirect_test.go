@@ -19,7 +19,9 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	botstopper "github.com/lk16/heyluuk/internal/bot_stopper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -482,9 +484,16 @@ func TestControllerInsertNewLink(t *testing.T) {
 
 func TestControllerNewLinkPost(t *testing.T) {
 
+	var successVerifier, failVerifier botstopper.MockVerifier
+	successVerifier.On("Verify", mock.Anything).Return(true)
+	failVerifier.On("Verify", mock.Anything).Return(false)
+
 	e := echo.New()
 
-	cont := &Controller{DB: db}
+	cont := &Controller{
+		DB:         db,
+		BotStopper: &successVerifier,
+	}
 
 	// clean up after this test finishes
 	defer func() {
@@ -515,13 +524,19 @@ func TestControllerNewLinkPost(t *testing.T) {
 		assert.Equal(t, count, expectedDBNodeCount)
 	}
 
-	t.Run("InvalidShortCut", func(t *testing.T) {
-		body := PostLinkBody{Path: "", URL: ""}
+	t.Run("VerifyFail", func(t *testing.T) {
+		body := PostLinkBody{Path: "a", URL: "http://example.com"}
 		bodyBytes, err := json.Marshal(body)
 		assert.Nil(t, err)
 
 		expectedStatusCode := http.StatusBadRequest
-		expectedJSON := ErrorResponse{"Invalid shortcut"}
+		expectedJSON := ErrorResponse{"Anti-bot challenge failed"}
+
+		cont.BotStopper = &failVerifier
+		defer func() {
+			cont.BotStopper = &successVerifier
+		}()
+
 		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
 	})
 

@@ -34,7 +34,7 @@ This project aims to:
             - [ ] fix bugs
                 - [ ] replace recaptcha with free-as-in-beer bot-check
                     - [x] remove captcha
-                    - [ ] create anti-bot-check
+                    - [x] create anti-bot-check
                 - [ ] cannot post twice without refresh
                 - [ ] reload tree structure on successfully adding new link
             - [ ] human-friendly error messages

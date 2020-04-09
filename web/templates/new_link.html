@@ -29,6 +29,16 @@
 
             return false;
         });
+
+        $.ajax({
+            type: "GET",
+            url: '/api/challenge',
+            success: function (result) {
+                console.log(result);
+                $("#form-challenge-question").html(result.question);
+                $("#form-challenge-id").attr("value", result.id);
+            }
+        });
     });
 </script>
 
@@ -45,6 +55,14 @@
         </div>
         <div class="input-group form-group mx-sm-2 mb-2">
             <input type="text" id='form-url' name="url" class="form-control" placeholder="example.org/something" required />
+        </div>
+        <div class="input-group form-group mx-sm-2 mb-2">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="form-challenge-question"></span>
+            </div>
+            <input type="text" id='form-challenge-answer' name="challenge-answer" class="form-control" placeholder="anti-spam"
+                aria-describedby="form-challenge-question" required />
+            <input type="hidden" id='form-challenge-id' name="challenge-id" />
         </div>
         <button id="submit" class="btn btn-primary mx-sm-2 mb-2">Create link</button>
     </form>

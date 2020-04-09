@@ -145,7 +145,7 @@ func TestBotStopperVerify(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		bs := NewBotStopper()
 		challenge := bs.GetChallenge()
-		response := &Response{
+		response := Response{
 			ID:     challenge.ID,
 			Answer: bs.answers[challenge.ID].value,
 		}
@@ -162,7 +162,7 @@ func TestBotStopperVerify(t *testing.T) {
 				answer := bs.answers[challenge.ID].value
 				bs.mutex.Unlock()
 
-				response := &Response{
+				response := Response{
 					ID:     challenge.ID,
 					Answer: answer,
 				}
@@ -186,7 +186,7 @@ func TestBotStopperVerify(t *testing.T) {
 					bs.mutex.Unlock()
 				}
 
-				response := &Response{
+				response := Response{
 					ID:     challenge.ID,
 					Answer: answer,
 				}
@@ -197,7 +197,7 @@ func TestBotStopperVerify(t *testing.T) {
 
 	t.Run("FailChallengeUnknown", func(t *testing.T) {
 		bs := NewBotStopper()
-		response := &Response{
+		response := Response{
 			ID:     "foo",
 			Answer: "bar",
 		}
@@ -213,7 +213,7 @@ func TestBotStopperVerify(t *testing.T) {
 			value:  "foo",
 		}
 
-		response := &Response{
+		response := Response{
 			ID:     challenge.ID,
 			Answer: bs.answers[challenge.ID].value,
 		}
@@ -224,7 +224,7 @@ func TestBotStopperVerify(t *testing.T) {
 		bs := NewBotStopper()
 		challenge := bs.GetChallenge()
 
-		response := &Response{
+		response := Response{
 			ID:     challenge.ID,
 			Answer: bs.answers[challenge.ID].value + "wrong", // force wrong answer
 		}

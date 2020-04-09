@@ -1,5 +1,7 @@
 package redirect
 
+import botstopper "github.com/lk16/heyluuk/internal/bot_stopper"
+
 // Node is a database model
 type Node struct {
 	ID          uint   `gorm:"primary_key" json:"id"`
@@ -28,4 +30,5 @@ type CreateLinkResponse struct {
 type PostLinkBody struct {
 	URL  string `json:"url"`
 	Path string `json:"path"`
+	botstopper.Response
 }
