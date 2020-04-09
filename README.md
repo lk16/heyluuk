@@ -30,10 +30,11 @@ This project aims to:
             - [x] basic form
             - [x] feedback on submission
             - [x] ban URLs that redirect
-            - [ ] ban URL with static/ and api/ prefixes
+            - [x] ban URLs with static/ and api/ prefixes
             - [ ] fix bugs
                 - [ ] cannot post twice without refresh / get rid of recaptcha
-                - [ ] reload tree structure
+                - [ ] reload tree structure on successfully adding new link
+            - [ ] human-friendly error messages
         - [ ] listing tree structure
             - [x] showing tree
             - [x] sorting
@@ -51,6 +52,7 @@ This project aims to:
         - [ ] creating
 
 - [ ] Other stuff
+    - [ ] use [air](https://github.com/cosmtrek/air) for auto-reloading in dev
     - [ ] test coverage
     - [ ] CI
     - [ ] linting

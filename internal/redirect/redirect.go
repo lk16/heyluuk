@@ -31,6 +31,7 @@ var (
 	errURLTimeout          = errors.New("URL responds too slowly")
 	errURLRedirects        = errors.New("URL redirects")
 	errURLStatusCode       = errors.New("URL responds with unexpected status code")
+	errPathInvalidPrefix   = errors.New("Path has invalid prefix")
 
 	pathRegex = regexp.MustCompile("[a-z0-9/-]*")
 )
@@ -160,6 +161,10 @@ func verifyAndSplitPath(path string) (segments []string, err error) {
 
 	if len(segments) == 0 {
 		return nil, errEmptyPath
+	}
+
+	if segments[0] == "static" || segments[0] == "api" {
+		return nil, errPathInvalidPrefix
 	}
 
 	if len(segments) > maxPathDepth {
@@ -315,7 +320,7 @@ func (cont *Controller) PostLink(c echo.Context) error {
 
 	var URL = body.URL
 	if URL, err = verifyURL(URL); err != nil {
-		response := ErrorResponse{"Invalid redirect link"}
+		response := ErrorResponse{"Invalid redirect link: " + err.Error()}
 		return c.JSON(http.StatusBadRequest, response)
 	}
 

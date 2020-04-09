@@ -89,6 +89,14 @@ func TestControllerVerifyAndSplitPath(t *testing.T) {
 		testCase{longSegment, []string{longSegment}, nil},
 		testCase{tooLongSegment, ([]string)(nil), errTooLongSegment},
 		testCase{"a/" + tooLongSegment, ([]string)(nil), errTooLongSegment},
+		testCase{"static/", ([]string)(nil), errPathInvalidPrefix},
+		testCase{"/static/", ([]string)(nil), errPathInvalidPrefix},
+		testCase{"/static/foo", ([]string)(nil), errPathInvalidPrefix},
+		testCase{"static/foo", ([]string)(nil), errPathInvalidPrefix},
+		testCase{"api/", ([]string)(nil), errPathInvalidPrefix},
+		testCase{"/api/", ([]string)(nil), errPathInvalidPrefix},
+		testCase{"/api/foo", ([]string)(nil), errPathInvalidPrefix},
+		testCase{"api/foo", ([]string)(nil), errPathInvalidPrefix},
 	}
 
 	for _, testCase := range testCases {
@@ -580,7 +588,7 @@ func TestControllerNewLinkPost(t *testing.T) {
 		assert.Nil(t, err)
 
 		expectedStatusCode := http.StatusBadRequest
-		expectedJSON := ErrorResponse{"Invalid redirect link"}
+		expectedJSON := ErrorResponse{"Invalid redirect link: " + errURLRedirects.Error()}
 		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
 	})
 
