@@ -42,7 +42,7 @@ This project aims to:
             - [x] showing tree
             - [x] sorting
             - [x] icons not showing
-            - [ ] fix missing indentation on leaf nodes
+            - [x] fix missing indentation on leaf nodes
         - [ ] toggle open links in new window
         - [ ] generic frontend improvements
             - [ ] fix colors

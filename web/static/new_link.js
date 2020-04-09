@@ -10,36 +10,42 @@ function load_new_challenge() {
     });
 }
 
-function lazy_load_tree_nodes(node, dataHandler) {
-    var result = "";
-    $.ajax({
-        url: '/api/node/' + node.id + '/children',
-        type: 'GET',
-    }).then(
-        function(data){
-            data = data.sort(function(a,b){
-            if(a.path_segment < b.path_segment) { return -1; }
-            return 1;
-        })
+function nodes_api_to_array(data) {
+    data = data.sort(function(a,b){
+        if(a.path_segment < b.path_segment) {
+            return -1;
+        }
+        return 1;
+    });
 
-        var children = [];
-        $(data).each(function(_index, element){
+    var children = [];
+    $(data).each(function(_index, element){
 
-            var text = element.path_segment;
+        var text = element.path_segment;
 
-            if(element['url'] !== '') {
-                text = '<a href="' + element['url'] + '">' + text + '</a>';
-            }
+        if(element['url'] !== '') {
+            text = '<a href="' + element['url'] + '">' + text + '</a>';
+        }
 
-            children.push({
-                text: text,
-                lazyLoad: true,
-                id: element.id,
-                selectable: false
-            });
+        children.push({
+            text: text,
+            lazyLoad: true,
+            id: element.id,
+            selectable: false
         });
+    });
 
-        dataHandler(children);
+    return children
+}
+
+function lazy_load_tree_nodes(node, dataHandler) {
+    $.ajax({
+        type: 'GET',
+        url: '/api/node/' + node.id + '/children',
+        success: function(data, _status, _xhr) {
+            children = nodes_api_to_array(data);
+            dataHandler(children);
+        }
     });
 }
 
@@ -48,33 +54,10 @@ function load_link_tree() {
         url: '/api/node/root',
         success: function(data, _status, _xhr) {
 
-            data = data.sort(function(a,b){
-                if(a.path_segment < b.path_segment) { return -1; }
-                return 1;
-            })
-
-            var rootNodes = [];
-
-            $(data).each(function(_index, element){
-
-                var text = element.path_segment;
-
-                if(element['url'] !== '') {
-                    text = '<a href="' + element['url'] + '">' + text + '</a>';
-                }
-
-                rootNodes.push({
-                    text: text,
-                    lazyLoad: true,
-                    id: element.id,
-                    selectable: false
-                });
-            });
-
             var treeData = [
                 {
                     text: 'heylu.uk',
-                    nodes: rootNodes,
+                    nodes: nodes_api_to_array(data),
                     selectable: false,
                 }
             ];
@@ -86,12 +69,11 @@ function load_link_tree() {
                 expandIcon: "fas fa-plus",
                 collapseIcon: "fas fa-minus",
                 loadingIcon: "fas fa-ellipsis-v",
-                icon: "fas fa-link"
+                emptyIcon: "fas fa-link"
             });
         }
     });
 }
-
 
 $(document).ready(function () {
 
