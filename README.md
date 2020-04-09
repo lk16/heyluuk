@@ -31,12 +31,12 @@ This project aims to:
             - [x] feedback on submission
             - [x] ban URLs that redirect
             - [x] ban URLs with static/ and api/ prefixes
-            - [ ] fix bugs
+            - [x] fix bugs
                 - [x] replace recaptcha with free-as-in-beer bot-check
                     - [x] remove captcha
                     - [x] create anti-bot-check
-                - [ ] cannot post twice without refresh
-                - [ ] reload tree structure on successfully adding new link
+                - [x] cannot post twice without refresh
+                - [x] reload tree structure on successfully adding new link
             - [ ] human-friendly error messages
         - [ ] listing tree structure
             - [x] showing tree
