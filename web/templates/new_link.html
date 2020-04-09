@@ -1,10 +1,23 @@
 {{ define "content" }}
 <script>
+    function load_new_challenge() {
+        $.ajax({
+            type: "GET",
+            url: '/api/challenge',
+            success: function (result) {
+                $("#form-challenge-question").html(result.question);
+                $("#form-challenge-id").attr("value", result.id);
+            }
+        });
+    }
+
     $(document).ready(function () {
 
-        $("#form").submit(function (e) {
+        load_new_challenge();
 
-            var array = $("#form").serializeArray();
+        $("#new-link-form").submit(function (e) {
+
+            var array = $("#new-link-form").serializeArray();
             var body = {};
             $(array).each(function (index, obj) {
                 body[obj.name] = obj.value;
@@ -17,27 +30,19 @@
                 data: JSON.stringify(body),
                 success: function (result) {
                     var message = "Your link <a target='_blank' href='" + result['shortcut'] + "'>" + window.location.host + result['shortcut'] + "</a> has been created.";
-                    $("#form-alert").html(message).removeClass("alert-danger").addClass("alert-succes").show();
-                    $("#form-path").val('');
-                    $("#form-url").val('');
+                    $("#form-alert").html(message).removeClass("alert-danger").addClass("alert-success").show();
+                    $("#new-link-form").find("input").val("");
+                    load_new_challenge();
                 },
                 error: function (xhr, resp, text) {
                     var message = "Error: " + xhr.responseJSON["error"];
                     $("#form-alert").html(message).removeClass("alert-success").addClass("alert-danger").show();
+                    $("#form-challenge-answer").val("");
+                    load_new_challenge();
                 }
             });
 
             return false;
-        });
-
-        $.ajax({
-            type: "GET",
-            url: '/api/challenge',
-            success: function (result) {
-                console.log(result);
-                $("#form-challenge-question").html(result.question);
-                $("#form-challenge-id").attr("value", result.id);
-            }
         });
     });
 </script>
@@ -45,10 +50,10 @@
 <div class="m-3">
     <div id="form-alert" class="alert alert-success" role="alert" style="display:none;">
     </div>
-    <form class="form-inline" action="" id="form">
+    <form class="form-inline" action="" id="new-link-form">
         <div class="input-group form-group mx-sm-2 mb-2">
             <div class="input-group-prepend">
-                <span class="input-group-text" id="inputGroupPrepend">https://heylu.uk/</span>
+                <span class="input-group-text" id="inputGroupPrepend">heylu.uk/</span>
             </div>
             <input type="text" id='form-path' name="path" class="form-control" placeholder="at/my/amazing/thing"
                 aria-describedby="inputGroupPrepend" required />

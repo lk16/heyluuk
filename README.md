@@ -32,7 +32,7 @@ This project aims to:
             - [x] ban URLs that redirect
             - [x] ban URLs with static/ and api/ prefixes
             - [ ] fix bugs
-                - [ ] replace recaptcha with free-as-in-beer bot-check
+                - [x] replace recaptcha with free-as-in-beer bot-check
                     - [x] remove captcha
                     - [x] create anti-bot-check
                 - [ ] cannot post twice without refresh
