@@ -34,15 +34,6 @@
     <link rel="stylesheet" type="text/css" href="/static/patternfly-bootstrap-treeview/bootstrap-treeview.min.css" />
     <link rel="stylesheet" type="text/css" href="/static/font-awesome/css/all.min.css" />
 
-    <script src="https://www.google.com/recaptcha/api.js?render={{ .CaptchaSiteKey }}"></script>
-    <script>
-    grecaptcha.ready(function() {
-        grecaptcha.execute('{{ .CaptchaSiteKey }}', {action: 'homepage'}).then(function(token) {
-            document.getElementById('g-recaptcha-response').value = token;
-        });
-    });
-    </script>
-
     <script src="/static/jquery/jquery.min.js"></script>
     <script src="/static/patternfly-bootstrap-treeview/bootstrap-treeview.min.js"></script>
     <script src="/static/bootstrap/js/bootstrap.min.js"></script>

@@ -32,7 +32,10 @@ This project aims to:
             - [x] ban URLs that redirect
             - [x] ban URLs with static/ and api/ prefixes
             - [ ] fix bugs
-                - [ ] cannot post twice without refresh / get rid of recaptcha
+                - [ ] replace recaptcha with free-as-in-beer bot-check
+                    - [x] remove captcha
+                    - [ ] create anti-bot-check
+                - [ ] cannot post twice without refresh
                 - [ ] reload tree structure on successfully adding new link
             - [ ] human-friendly error messages
         - [ ] listing tree structure
@@ -41,7 +44,10 @@ This project aims to:
             - [x] icons not showing
             - [ ] fix missing indentation on leaf nodes
         - [ ] toggle open links in new window
-        - [ ] fix colors
+        - [ ] generic frontend improvements
+            - [ ] fix colors
+            - [ ] fix html templates mess
+            - [ ] fix title
         - [ ] searching
         - [x] 404 page
 
@@ -52,6 +58,8 @@ This project aims to:
         - [ ] creating
 
 - [ ] Other stuff
+    - [ ] add LICENSE file
+    - [ ] remove any non-free dependencies
     - [ ] use [air](https://github.com/cosmtrek/air) for auto-reloading in dev
     - [ ] test coverage
     - [ ] CI

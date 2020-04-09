@@ -19,10 +19,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/lk16/heyluuk/internal/captcha"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"gopkg.in/romanyx/recaptcha.v1"
 )
 
 var (
@@ -487,11 +484,7 @@ func TestControllerNewLinkPost(t *testing.T) {
 
 	e := echo.New()
 
-	mockCaptchaApprover := &captcha.MockCaptchaVerifier{}
-	mockCaptchaApprover.On("Verify", mock.Anything).Times(99).
-		Return(&recaptcha.Response{Success: true}, nil)
-
-	cont := &Controller{DB: db, Captcha: mockCaptchaApprover}
+	cont := &Controller{DB: db}
 
 	// clean up after this test finishes
 	defer func() {
@@ -521,46 +514,6 @@ func TestControllerNewLinkPost(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, count, expectedDBNodeCount)
 	}
-
-	t.Run("CaptchaFail", func(t *testing.T) {
-
-		body := PostLinkBody{Path: "", URL: ""}
-		bodyBytes, err := json.Marshal(body)
-		assert.Nil(t, err)
-
-		mockCaptchaFailer := &captcha.MockCaptchaVerifier{}
-		mockCaptchaFailer.On("Verify", mock.Anything).Once().
-			Return(&recaptcha.Response{Success: false}, nil)
-
-		cont.Captcha = mockCaptchaFailer
-		defer func() {
-			cont.Captcha = mockCaptchaApprover
-		}()
-
-		expectedStatusCode := http.StatusBadRequest
-		expectedJSON := ErrorResponse{"Recaptcha verification failed"}
-		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
-	})
-
-	t.Run("CaptchaErrorFailer", func(t *testing.T) {
-
-		body := PostLinkBody{Path: "", URL: ""}
-		bodyBytes, err := json.Marshal(body)
-		assert.Nil(t, err)
-
-		mockCaptchaFailer := &captcha.MockCaptchaVerifier{}
-		mockCaptchaFailer.On("Verify", mock.Anything).Once().
-			Return((*recaptcha.Response)(nil), errors.New(""))
-
-		cont.Captcha = mockCaptchaFailer
-		defer func() {
-			cont.Captcha = mockCaptchaApprover
-		}()
-
-		expectedStatusCode := http.StatusBadRequest
-		expectedJSON := ErrorResponse{"Recaptcha verification failed"}
-		tester(t, bytes.NewBuffer(bodyBytes), expectedStatusCode, expectedJSON, 0)
-	})
 
 	t.Run("InvalidShortCut", func(t *testing.T) {
 		body := PostLinkBody{Path: "", URL: ""}

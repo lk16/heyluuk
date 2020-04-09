@@ -48,12 +48,11 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 }
 
 type renderData struct {
-	CaptchaSiteKey string
 }
 
 func renderTemplateView(templateName string) func(c echo.Context) error {
 	return func(c echo.Context) error {
-		data := renderData{CaptchaSiteKey: captchaSiteKey}
+		data := renderData{}
 		return c.Render(http.StatusOK, templateName, data)
 	}
 }

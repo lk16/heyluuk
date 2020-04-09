@@ -26,7 +26,6 @@ type CreateLinkResponse struct {
 
 // PostLinkBody is used by a JSON request model
 type PostLinkBody struct {
-	Recaptcha string `json:"g-recaptcha-response"`
-	URL       string `json:"url"`
-	Path      string `json:"path"`
+	URL  string `json:"url"`
+	Path string `json:"path"`
 }

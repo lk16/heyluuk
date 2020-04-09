@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,12 +12,9 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
-	"github.com/lk16/heyluuk/internal/captcha"
 )
 
 var (
-	captchaSiteKey = os.Getenv("CAPTCHA_SITE_KEY")
-
 	errEmptyPath           = errors.New("Cannot get link for empty path")
 	errEmptyRedirectURL    = errors.New("No redirect URL found")
 	errLinkNotFound        = errors.New("Link not found")
@@ -63,8 +59,7 @@ func Migrate(db *gorm.DB) error {
 
 // Controller supplies some additional context for all request handlers
 type Controller struct {
-	DB      *gorm.DB
-	Captcha captcha.CaptchaVerifier
+	DB *gorm.DB
 }
 
 func (cont *Controller) getLink(pathSegments []string) (string, error) {
@@ -129,11 +124,9 @@ func (cont *Controller) Redirect(c echo.Context) error {
 // NewLinkGet is a page that handles GET requests to create a new link
 func (cont *Controller) NewLinkGet(c echo.Context) error {
 
-	type dataType struct {
-		CaptchaSiteKey string
-	}
+	type dataType struct{}
 
-	data := dataType{CaptchaSiteKey: captchaSiteKey}
+	data := dataType{}
 	return c.Render(http.StatusOK, "new_link.html", data)
 }
 
@@ -295,22 +288,12 @@ func (cont *Controller) PostLink(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	res, err := cont.Captcha.Verify(body.Recaptcha)
-
 	linkResponse := CreateLinkResponse{
 		Shortcut: body.Path,
 		Redirect: body.URL}
 
-	if err != nil {
-		log.Printf("Recaptcha error: %s", err.Error())
-	}
-
-	if err != nil || !res.Success {
-		response := ErrorResponse{"Recaptcha verification failed"}
-		return c.JSON(http.StatusBadRequest, response)
-	}
-
 	var segments []string
+	var err error
 	if segments, err = verifyAndSplitPath(body.Path); err != nil {
 		response := ErrorResponse{"Invalid shortcut"}
 		return c.JSON(http.StatusBadRequest, response)

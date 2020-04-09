@@ -10,15 +10,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/lk16/heyluuk/internal/redirect"
-	"gopkg.in/romanyx/recaptcha.v1"
 
 	_ "github.com/jinzhu/gorm/dialects/postgres" // db driver
 )
 
 // TODO pass environment as dict to GetServer
 var (
-	captchaSiteKey   = os.Getenv("CAPTCHA_SITE_KEY")
-	captchaSecretKey = os.Getenv("CAPTCHA_SECRET_KEY")
 	postgresDB       = os.Getenv("POSTGRES_DB")
 	postgresUser     = os.Getenv("POSTGRES_USER")
 	postgresPassword = os.Getenv("POSTGRES_PASSWORD")
@@ -46,8 +43,8 @@ func GetServer() *echo.Echo {
 	e.Renderer = NewTemplateRenderer()
 
 	controller := &redirect.Controller{
-		DB:      db,
-		Captcha: recaptcha.New(captchaSecretKey)}
+		DB: db,
+	}
 
 	e.GET("/*", controller.Redirect)
 
