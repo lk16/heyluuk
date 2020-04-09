@@ -37,6 +37,7 @@ This project aims to:
                     - [x] create anti-bot-check
                 - [x] cannot post twice without refresh
                 - [x] reload tree structure on successfully adding new link
+                - [x] reorder routes to prevent redirect overriding actual pages
             - [ ] human-friendly error messages
         - [ ] listing tree structure
             - [x] showing tree
@@ -71,3 +72,4 @@ This project aims to:
     - [x] use npm to install jquery, bootstrap, bootstrap-treeview?
     - [ ] write a toc
     - [ ] bring back button to show/hide sidebar on mobile
+    - [ ] use typescript

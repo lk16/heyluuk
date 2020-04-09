@@ -43,6 +43,7 @@ function lazy_load_tree_nodes(node, dataHandler) {
         type: 'GET',
         url: '/api/node/' + node.id + '/children',
         success: function(data, _status, _xhr) {
+            console.log($('#myTree').treeview('getParent', node));
             children = nodes_api_to_array(data);
             dataHandler(children);
         }

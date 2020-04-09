@@ -48,8 +48,6 @@ func GetServer() *echo.Echo {
 		BotStopper: botstopper.NewBotStopper(),
 	}
 
-	e.GET("/*", controller.Redirect)
-
 	e.Static("/static", "./web/static")
 	e.Static("/static/jquery", "/npm/node_modules/jquery/dist")
 	e.Static("/static/bootstrap", "/npm/node_modules/bootstrap/dist")
@@ -68,6 +66,7 @@ func GetServer() *echo.Echo {
 	e.GET("/api/node/root", controller.GetNodeRoot)
 	e.GET("/api/challenge", controller.GetChallenge)
 
+	e.GET("/*", controller.Redirect)
 	return e
 }
 
