@@ -70,6 +70,6 @@ This project aims to:
     - [ ] remove junk files
     - [ ] unify naming of path segments
     - [x] use npm to install jquery, bootstrap, bootstrap-treeview?
-    - [ ] write a toc
+    - [x] write terms and conditions
     - [ ] bring back button to show/hide sidebar on mobile
     - [ ] use typescript

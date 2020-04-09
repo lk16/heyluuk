@@ -58,7 +58,8 @@ func GetServer() *echo.Echo {
 	e.GET("/at/my/site", renderTemplateView("index.html"))
 	e.GET("/at/my/faq", renderTemplateView("faq.html"))
 	e.GET("/at/my/predictions", renderTemplateView("predictions.html"))
-	e.GET("/at/this", renderTemplateView("new_link.html"))
+	e.GET("/at/my/terms", renderTemplateView("terms_and_conditions.html"))
+	e.GET("/at/my/links", renderTemplateView("new_link.html"))
 
 	e.POST("/api/link", controller.PostLink)
 	e.GET("/api/node/:id", controller.GetNode)

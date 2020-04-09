@@ -22,7 +22,7 @@ func NewTemplateRenderer() *TemplateRenderer {
 	t := &TemplateRenderer{
 		templates: make(map[string]*template.Template)}
 
-	files := []string{"index.html", "faq.html", "predictions.html", "new_link.html", "not_found.html"}
+	files := []string{"index.html", "faq.html", "predictions.html", "new_link.html", "not_found.html", "terms_and_conditions.html"}
 
 	for _, file := range files {
 		t.templates[file] = template.Must(

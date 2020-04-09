@@ -10,7 +10,7 @@ function load_new_challenge() {
     });
 }
 
-function nodes_api_to_array(data) {
+function nodes_api_to_array(data, link_prefix) {
     data = data.sort(function(a,b){
         if(a.path_segment < b.path_segment) {
             return -1;
@@ -24,14 +24,15 @@ function nodes_api_to_array(data) {
         var text = element.path_segment;
 
         if(element['url'] !== '') {
-            text = '<a href="' + element['url'] + '">' + text + '</a>';
+            text = '<a href="' + link_prefix + '/' + element.path_segment + '" target="_blank">' + text + '</a>';
         }
 
         children.push({
             text: text,
             lazyLoad: true,
             id: element.id,
-            selectable: false
+            selectable: false,
+            link_prefix: link_prefix + "/" + element.path_segment
         });
     });
 
@@ -43,8 +44,8 @@ function lazy_load_tree_nodes(node, dataHandler) {
         type: 'GET',
         url: '/api/node/' + node.id + '/children',
         success: function(data, _status, _xhr) {
-            console.log($('#myTree').treeview('getParent', node));
-            children = nodes_api_to_array(data);
+            console.log($('#myTree').treeview('getParents', node));
+            children = nodes_api_to_array(data, node.link_prefix);
             dataHandler(children);
         }
     });
@@ -58,7 +59,7 @@ function load_link_tree() {
             var treeData = [
                 {
                     text: 'heylu.uk',
-                    nodes: nodes_api_to_array(data),
+                    nodes: nodes_api_to_array(data, window.location.origin),
                     selectable: false,
                 }
             ];
