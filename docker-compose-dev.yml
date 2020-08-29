@@ -16,6 +16,8 @@ services:
       - POSTGRES_PASSWORD
       - CAPTCHA_SITE_KEY
       - CAPTCHA_SECRET_KEY
+    ports:
+      - 8080:8080
 
   db:
     image: postgres
@@ -37,7 +39,7 @@ services:
     networks:
       - postgres
     ports:
-      - 9000:8080
+      - 9000:9000
 
   nginx:
     image: nginx:1.15-alpine
