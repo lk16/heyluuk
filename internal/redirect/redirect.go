@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -175,51 +174,6 @@ func verifyAndSplitPath(path string) (segments []string, err error) {
 	return segments, nil
 }
 
-func verifyURL(URL string) (string, error) {
-
-	if !strings.HasPrefix(URL, "http://") && !strings.HasPrefix(URL, "https://") {
-		URL = "http://" + URL
-	}
-
-	parsedURL, err := url.Parse(URL)
-	if err != nil {
-		return "", err
-	}
-
-	client := http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return errURLRedirects
-		},
-		Timeout: linkVerifyTimeout,
-	}
-
-	request := &http.Request{
-		Method: "GET",
-		URL:    parsedURL,
-		Header: make(http.Header),
-	}
-	request.Header.Add("User-Agent", linkVerifyUserAgent)
-
-	response, err := client.Do(request)
-	if err != nil {
-		if urlErr, ok := err.(*url.Error); ok {
-			if urlErr.Timeout() {
-				return "", errURLTimeout
-			}
-			return "", urlErr.Err
-		}
-		return "", err
-	}
-
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return "", errURLStatusCode
-	}
-
-	return URL, nil
-}
-
 func (cont *Controller) insertNewLink(URL string, segments []string) error {
 
 	if len(segments) == 0 {
@@ -309,9 +263,8 @@ func (cont *Controller) PostLink(c echo.Context) error {
 	linkResponse.Shortcut = "/" + strings.Join(segments, "/")
 
 	var URL = body.URL
-	if URL, err = verifyURL(URL); err != nil {
-		response := ErrorResponse{"Invalid redirect link: " + err.Error()}
-		return c.JSON(http.StatusBadRequest, response)
+	if !strings.HasPrefix(URL, "http://") && !strings.HasPrefix(URL, "https://") {
+		URL = "http://" + URL
 	}
 
 	linkResponse.Redirect = URL
