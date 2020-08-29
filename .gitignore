@@ -2,3 +2,4 @@
 data/
 npm/node_modules
 *.code-workspace
+.vscode/
