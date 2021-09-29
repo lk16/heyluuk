@@ -6,7 +6,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.13.0",
     "bootstrap": "^4.3.1",
-    "i": "^0.3.6",
+    "i": "^0.3.7",
     "patternfly-bootstrap-treeview": "^2.1.10",
     "popper.js": "^1.14.7",
     "simpler-sidebar": "^2.2.5"
